@@ -1,10 +1,16 @@
 package com.example.testapp1;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.PorterDuff;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.CursorLoader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -42,11 +48,6 @@ public class MainActivity extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
-
-
-    private static final int SELECT_PICTURE = 1;
-
-    private String selectedImagePath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,6 +104,44 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * helper to retrieve the path of an image URI
+     */
+    public String getPath(Uri uri) {
+        // just some safety built in
+        if( uri == null ) {
+            // TODO perform some logging or show user feedback
+            return null;
+        }
+        // try to retrieve the image from the media store first
+        // this will only work for images selected from gallery
+        String[] projection = { MediaStore.Images.Media.DATA };
+        Cursor cursor = managedQuery(uri, projection, null, null, null);
+        if( cursor != null ){
+            int column_index = cursor
+                    .getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        }
+        // this is our fallback here
+        return uri.getPath();
+    }
+
+    public String getRealPathFromURI(Context context, Uri contentUri) {
+        Cursor cursor = null;
+        try {
+            String[] proj = { MediaStore.Images.Media.DATA };
+            cursor = context.getContentResolver().query(contentUri,  proj, null, null, null);
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    /**
      * A placeholder fragment containing a simple view.
      */
     public static class PlaceholderFragment extends Fragment {
@@ -112,7 +151,24 @@ public class MainActivity extends AppCompatActivity {
          */
         private static final String ARG_SECTION_NUMBER = "section_number";
 
+        private static final int SELECT_PICTURE = 1;
+
+        private String selectedImagePath;
+
+        private MainActivity mActivity;
+
         public PlaceholderFragment() {
+        }
+
+
+        @Override
+        public void onAttach(Activity activity)
+        {
+            if (activity instanceof MainActivity)
+            {
+                mActivity = (MainActivity) activity;
+            }
+            super.onAttach(activity);
         }
 
         /**
@@ -193,6 +249,22 @@ public class MainActivity extends AppCompatActivity {
             });
             return rootView;
         }
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent data)
+        {
+            if (resultCode == RESULT_OK)
+            {
+                if (requestCode == SELECT_PICTURE)
+                {
+                    Uri selectedImageUri = data.getData();
+                    selectedImagePath = mActivity.getPath(selectedImageUri);
+                    selectedImagePath = mActivity.getRealPathFromURI(getContext(), selectedImageUri);
+                }
+            }
+        }
+
+
     }
 
     /**
