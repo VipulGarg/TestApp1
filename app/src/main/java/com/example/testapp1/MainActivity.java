@@ -51,6 +51,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // load opencv library
+        System.loadLibrary("opencv_java3");
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
