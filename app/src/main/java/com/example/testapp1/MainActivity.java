@@ -1,5 +1,6 @@
 package com.example.testapp1;
 
+import android.graphics.PorterDuff;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -14,6 +15,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -143,6 +145,41 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             });
+
+            //set the ontouch listener
+            imageView.setOnTouchListener(new View.OnTouchListener() {
+
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+
+                    switch (event.getAction())
+                    {
+                        case MotionEvent.ACTION_DOWN:
+                        {
+                            ImageView view = (ImageView) v;
+                            //overlay is black with transparency of 0x77 (119)
+                            view.getDrawable().setColorFilter(0x77000000, PorterDuff.Mode.SRC_ATOP);
+                            view.invalidate();
+                            break;
+                        }
+                        case MotionEvent.ACTION_UP:
+                        {
+                            alt_bld.show();
+                        }
+
+                        case MotionEvent.ACTION_CANCEL:
+                        {
+                            ImageView view = (ImageView) v;
+                            //clear the overlay
+                            view.getDrawable().clearColorFilter();
+                            view.invalidate();
+                            break;
+                        }
+                    }
+
+                    return true;
+                }
+            });
             return rootView;
         }
     }
@@ -158,21 +195,25 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public Fragment getItem(int position) {
+        public Fragment getItem(int position)
+        {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
             return PlaceholderFragment.newInstance(position + 1);
         }
 
         @Override
-        public int getCount() {
+        public int getCount()
+        {
             // Show 3 total pages.
             return 3;
         }
 
         @Override
-        public CharSequence getPageTitle(int position) {
-            switch (position) {
+        public CharSequence getPageTitle(int position)
+        {
+            switch (position)
+            {
                 case 0:
                     return "SECTION 1";
                 case 1:
