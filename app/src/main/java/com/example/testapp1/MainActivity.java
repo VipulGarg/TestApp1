@@ -1,5 +1,6 @@
 package com.example.testapp1;
 
+import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -41,6 +42,11 @@ public class MainActivity extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+
+
+    private static final int SELECT_PICTURE = 1;
+
+    private String selectedImagePath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -164,7 +170,12 @@ public class MainActivity extends AppCompatActivity {
                         }
                         case MotionEvent.ACTION_UP:
                         {
-                            alt_bld.show();
+                            //alt_bld.show();
+                            Intent intent = new Intent();
+                            intent.setType("image/*");
+                            intent.setAction(Intent.ACTION_GET_CONTENT);
+                            startActivityForResult(Intent.createChooser(intent,
+                                    "Select Picture"), SELECT_PICTURE);
                         }
 
                         case MotionEvent.ACTION_CANCEL:
