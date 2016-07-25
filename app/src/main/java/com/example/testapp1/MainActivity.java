@@ -18,6 +18,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.TextView;
+import android.widget.ImageView;
+
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -118,9 +122,27 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
+
+
+
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+            final AlertDialog.Builder alt_bld = new AlertDialog.Builder(getActivity());
+            alt_bld.setMessage("apprika target achieve...");
+            alt_bld.setCancelable(true);
+
             TextView textView = (TextView) rootView.findViewById(R.id.section_label);
             textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
+
+            ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
+            imageView.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View view) {
+                    alt_bld.show();
+                }
+
+            });
             return rootView;
         }
     }
