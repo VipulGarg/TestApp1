@@ -138,7 +138,7 @@ public class FaceDetector {
             Rect[] rects = faceDetections.toArray();
             for (Rect rect : faceDetections.toArray()) {
                 Imgproc.rectangle(image, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
-                        new Scalar(0, 255, 0));
+                        new Scalar(0, 0, 255));
 
                 Rect newRect = LocateTextBox(rect, rect.width, rect.height, inputPic.getWidth());
                 if (newRect.x != -1 && newRect.y != -1){
