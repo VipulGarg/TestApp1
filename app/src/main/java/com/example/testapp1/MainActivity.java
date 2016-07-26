@@ -208,6 +208,14 @@ public class MainActivity extends AppCompatActivity {
             super.onAttach(activity);
         }
 
+        // this method is only called once for this fragment
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            // retain this fragment
+            setRetainInstance(true);
+        }
+
         /**
          * Returns a new instance of this fragment for the given section
          * number.
