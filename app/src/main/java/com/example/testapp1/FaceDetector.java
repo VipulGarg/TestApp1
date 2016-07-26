@@ -72,15 +72,15 @@ public class FaceDetector {
             newRect.y = inputRect.y - height;
         }
         // top right
-        else if (inputRect.x + inputRect.width + 2 * width <= imageWidth
-                && inputRect.y - 2*height <= 0) {
-            newRect.x = inputRect.x + inputRect.width + 2 * width;
-            newRect.y = inputRect.y - 2 * height;
+        else if (inputRect.x + inputRect.width + width <= imageWidth
+                && inputRect.y - height <= 0) {
+            newRect.x = inputRect.x + inputRect.width;
+            newRect.y = inputRect.y - height;
         }
         // top
-        else if (inputRect.y - 2*height >= 0){
+        else if (inputRect.y - height >= 0){
             newRect.x = inputRect.x;
-            newRect.y = inputRect.y - 2*height;
+            newRect.y = inputRect.y - height;
         }
         // left
         else if (inputRect.x - width >= 0){
@@ -88,8 +88,8 @@ public class FaceDetector {
             newRect.y = inputRect.y;
         }
         // right
-        else if (inputRect.x + inputRect.width + 2 * width <= imageWidth){
-            newRect.x = inputRect.x + inputRect.width + 2 * width;
+        else if (inputRect.x + inputRect.width + width <= imageWidth){
+            newRect.x = inputRect.x + inputRect.width;
             newRect.y = inputRect.y;
         }
         else
