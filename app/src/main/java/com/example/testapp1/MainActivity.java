@@ -31,6 +31,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.ImageView;
 
@@ -170,26 +172,74 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.section_image);
     }
 
+
     /**
-     * A placeholder fragment containing a simple view.
+     * Base Class for Image Fragments
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class BaseImageFragment extends Fragment {
         /**
          * The fragment argument representing the section number for this
          * fragment.
          */
-        private static final String ARG_SECTION_NUMBER = "section_number";
+        protected static final String ARG_SECTION_NUMBER = "section_number";
+
+        protected MainActivity mActivity;
+        protected ImageView mImageView;
+        protected Button mBtn;
+        protected LinearLayout mLinearLayout;
+
+        public BaseImageFragment() {
+        }
+
+
+        @Override
+        public void onAttach(Activity activity)
+        {
+            if (activity instanceof MainActivity)
+            {
+                mActivity = (MainActivity) activity;
+            }
+            super.onAttach(activity);
+        }
+
+        // this method is only called once for this fragment
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            // retain this fragment
+            setRetainInstance(true);
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+
+            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+            LinearLayout linearLayout = (LinearLayout) rootView.findViewById(R.id.section_ll);
+            mLinearLayout = linearLayout;
+            Button btn = (Button) rootView.findViewById(R.id.section_button);
+            btn.setText("Load a Picture");
+            mBtn = btn;
+
+            ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
+            mImageView = imageView;
+
+            return rootView;
+        }
+    }
+
+    /**
+     * Fragment for loading a picture
+     */
+    public static class LoadImageFragment extends BaseImageFragment {
 
         private static final int SELECT_PICTURE = 1;
 
         private String mSelectedImagePath;
         private Uri mSelectedImageUri = null;
 
-        private MainActivity mActivity;
-        private ImageView mImageView;
-        private Button mBtn;
-
-        public PlaceholderFragment() {
+        public LoadImageFragment() {
         }
 
         public void SetImageUri(Uri uri)
@@ -234,8 +284,8 @@ public class MainActivity extends AppCompatActivity {
          * Returns a new instance of this fragment for the given section
          * number.
          */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
+        public static LoadImageFragment newInstance(int sectionNumber) {
+            LoadImageFragment fragment = new LoadImageFragment();
             Bundle args = new Bundle();
             args.putInt(ARG_SECTION_NUMBER, sectionNumber);
             fragment.setArguments(args);
@@ -246,15 +296,15 @@ public class MainActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
 
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            View rootView = super.onCreateView(inflater, container, savedInstanceState);
 
-            Button btn = (Button) rootView.findViewById(R.id.section_button);
-            btn.setText("Load a Picture");
-            mBtn = btn;
             if (mSelectedImageUri != null)
-                btn.setVisibility(View.INVISIBLE);
+            {
+                mBtn.setVisibility(View.INVISIBLE);
+                mLinearLayout.setBackgroundResource(0);
+            }
 
-            btn.setOnClickListener(new View.OnClickListener() {
+            mBtn.setOnClickListener(new View.OnClickListener() {
 
                 @Override
                 public void onClick(View view) {
@@ -270,9 +320,6 @@ public class MainActivity extends AppCompatActivity {
             final AlertDialog.Builder alt_bld = new AlertDialog.Builder(getActivity());
             alt_bld.setMessage("apprika target achieve...");
             alt_bld.setCancelable(true);
-
-            ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
-            mImageView = imageView;
 
             try{
                 InputStream is = getContext().getResources().openRawResource(R.raw.leofacedet);
@@ -302,7 +349,7 @@ public class MainActivity extends AppCompatActivity {
                 Imgproc.cvtColor(resultImage, resultImage, Imgproc.COLOR_GRAY2RGBA, 4);
                 Bitmap bmp = Bitmap.createBitmap(resultImage.cols(), resultImage.rows(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(resultImage, bmp);
-                imageView.setImageBitmap(bmp);
+                mImageView.setImageBitmap(bmp);
 
                 faceDetector.SaveImage(resultImgName, resultImage);
             }
@@ -312,7 +359,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (mSelectedImageUri == null)
             {
-                imageView.setImageResource(R.drawable.section_1);
+                mImageView.setImageResource(R.drawable.section_1);
             }
             else
             {
@@ -345,22 +392,13 @@ public class MainActivity extends AppCompatActivity {
     /**
      *  Fragment with Camera View for Pictures
      */
-    public static class CameraPictureFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
+    public static class CameraImageFragment extends BaseImageFragment {
 
         private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 1888;
 
         private Bitmap mBitmap = null;
 
-        private MainActivity mActivity;
-        private ImageView mImageView;
-        private Button mBtn;
-
-        public CameraPictureFragment() { }
+        public CameraImageFragment() { }
 
         public Bitmap GetBitmap() { return mBitmap; }
         public void SetBitmap(Bitmap bitmap) { mBitmap = bitmap; }
@@ -395,8 +433,8 @@ public class MainActivity extends AppCompatActivity {
          * Returns a new instance of this fragment for the given section
          * number.
          */
-        public static CameraPictureFragment newInstance(int sectionNumber) {
-            CameraPictureFragment fragment = new CameraPictureFragment();
+        public static CameraImageFragment newInstance(int sectionNumber) {
+            CameraImageFragment fragment = new CameraImageFragment();
             Bundle args = new Bundle();
             args.putInt(ARG_SECTION_NUMBER, sectionNumber);
             fragment.setArguments(args);
@@ -407,15 +445,12 @@ public class MainActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
 
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            View rootView = super.onCreateView(inflater, container, savedInstanceState);
 
-            Button btn = (Button) rootView.findViewById(R.id.section_button);
-            btn.setText("Take a Picture");
-            mBtn = btn;
             if (mBitmap != null)
-                btn.setVisibility(View.INVISIBLE);
+                mBtn.setVisibility(View.INVISIBLE);
 
-            btn.setOnClickListener(new View.OnClickListener() {
+            mBtn.setOnClickListener(new View.OnClickListener() {
 
                 @Override
                 public void onClick(View view) {
@@ -434,11 +469,9 @@ public class MainActivity extends AppCompatActivity {
             TextView textView = (TextView) rootView.findViewById(R.id.section_label);
             textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));*/
 
-            ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
-            mImageView = imageView;
             if (mBitmap == null)
             {
-                imageView.setImageResource(R.drawable.section_1);
+                mImageView.setImageResource(R.drawable.section_1);
             }
             else
             {
@@ -483,9 +516,9 @@ public class MainActivity extends AppCompatActivity {
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
-        private PlaceholderFragment p1;
-        private CameraPictureFragment p2;
-        private PlaceholderFragment p3;
+        private LoadImageFragment p1;
+        private CameraImageFragment p2;
+        private LoadImageFragment p3;
 
         private Context mContext;
 
@@ -503,9 +536,9 @@ public class MainActivity extends AppCompatActivity {
             {
                 case 0:
                 case 2:
-                    return PlaceholderFragment.newInstance(position + 1);
+                    return LoadImageFragment.newInstance(position + 1);
                 case 1:
-                    return CameraPictureFragment.newInstance(position + 1);
+                    return CameraImageFragment.newInstance(position + 1);
                 default: // should never reach here
                     return null;
             }
@@ -550,13 +583,13 @@ public class MainActivity extends AppCompatActivity {
             // save the appropriate reference depending on position
             switch (position) {
                 case 0:
-                    p1 = (PlaceholderFragment) createdFragment;
+                    p1 = (LoadImageFragment) createdFragment;
                     break;
                 case 1:
-                    p2 = (CameraPictureFragment) createdFragment;
+                    p2 = (CameraImageFragment) createdFragment;
                     break;
                 case 2:
-                    p3 = (PlaceholderFragment) createdFragment;
+                    p3 = (LoadImageFragment) createdFragment;
                     break;
             }
             return createdFragment;
