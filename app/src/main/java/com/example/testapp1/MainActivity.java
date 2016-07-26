@@ -404,6 +404,16 @@ public class MainActivity extends AppCompatActivity {
 
             Button btn = (Button) rootView.findViewById(R.id.section_button);
             btn.setText("Take a Picture");
+            btn.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(intent,
+                            CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+                }
+
+            });
 
             final AlertDialog.Builder alt_bld = new AlertDialog.Builder(getActivity());
             alt_bld.setMessage("apprika target achieve...");
@@ -417,57 +427,13 @@ public class MainActivity extends AppCompatActivity {
             mImageView = imageView;
             if (mBitmap == null)
             {
-                //imageView.setImageResource(R.drawable.section_1);
+                imageView.setImageResource(R.drawable.section_1);
             }
             else
             {
                 SetBitmapOnImageView(mBitmap);
             }
-            imageView.setOnClickListener(new View.OnClickListener() {
 
-                @Override
-                public void onClick(View view) {
-                    alt_bld.show();
-                }
-
-            });
-
-            //set the ontouch listener
-            imageView.setOnTouchListener(new View.OnTouchListener() {
-
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-
-                    switch (event.getAction())
-                    {
-                        case MotionEvent.ACTION_DOWN:
-                        {
-                            ImageView view = (ImageView) v;
-                            //overlay is black with transparency of 0x77 (119)
-                            view.getDrawable().setColorFilter(0x77000000, PorterDuff.Mode.SRC_ATOP);
-                            view.invalidate();
-                            break;
-                        }
-                        case MotionEvent.ACTION_UP:
-                        {
-                            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                            startActivityForResult(intent,
-                                    CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
-                        }
-
-                        case MotionEvent.ACTION_CANCEL:
-                        {
-                            ImageView view = (ImageView) v;
-                            //clear the overlay
-                            view.getDrawable().clearColorFilter();
-                            view.invalidate();
-                            break;
-                        }
-                    }
-
-                    return true;
-                }
-            });
             return rootView;
         }
 
