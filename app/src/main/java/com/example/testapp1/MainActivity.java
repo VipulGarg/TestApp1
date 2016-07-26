@@ -37,7 +37,12 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
@@ -45,7 +50,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -124,6 +131,48 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    /* Draws thought bubble onto target Mat
+     * target is the Mat to be drawn on
+     * p1 and p2 define the size and location of the thought bubble. (opposite corners)
+     * targetPoint is are the coordinates the thought bubble points to
+     * text is the text to be written in the thought bubble
+     */
+    public static void DrawThoughtBubble(Mat target, Point p1, Point p2, Point targetPoint, String text)
+    {
+        Scalar bubbleColor = new Scalar(255,255,255);
+        Scalar textColor = new Scalar(0,0,0);
+        double textSize = 0.5;
+        double textMargin = 2;
+
+        double minPuffSize = 5;
+        double maxPuffSize = 30;
+
+        double top = Math.min(p1.y, p2.y);
+        double left = Math.min(p1.x, p2.x);
+        double width = Math.abs(p1.x - p2.x);
+        double height = Math.abs(p1.y - p2.y);
+
+        // draw rectangle
+        Imgproc.rectangle(target, p1, p2, bubbleColor, -1 /*negative thickness means filled*/);
+        // draw bubble text
+        // TODO code up some word wrap?
+        Size textBoxSize = Imgproc.getTextSize(text, Core.FONT_HERSHEY_SIMPLEX, textSize, 1 /* thickness */, null);
+        Imgproc.putText(target, text, new Point(left+textMargin, top+textBoxSize.height+textMargin),
+                Core.FONT_HERSHEY_SIMPLEX, textSize, textColor);
+        // TODO draw bubble cloud border
+        double i;
+        // top
+//        for (i=left; i<left+width; )
+//        {
+//            double puffSize = ThreadLocalRandom.current().nextDouble(minPuffSize, maxPuffSize);
+//        }
+        // bottom
+        // left
+        // right
+        // draw bubble chain to target // TODO make it pretty
+        Imgproc.line(target, targetPoint, new Point(left + width/2, top + height/2), bubbleColor, 2);
     }
 
     /**
