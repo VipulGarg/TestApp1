@@ -45,6 +45,62 @@ public class FaceDetector {
         Imgcodecs.imwrite(resultImgName, image);
     }
 
+    // test whether 2 rectange
+    public boolean IsOverlapping(Rect rect1, Rect rect2){
+        return (!rect1.contains(new Point(rect2.x, rect2.y)) // top left
+        && !rect1.contains(new Point(rect2.x + rect2.width, rect2.y)) // top right
+        && !rect1.contains(new Point(rect2.x, rect2.y + rect2.height)) // bottom left
+        && !rect1.contains(new Point(rect2.x + rect2.width, rect2.y + rect2.height))); // bottom right
+    }
+
+    // we want to put a text box (width * height) outside the inputRect in the following positions
+    // depends on where it fits
+    //           \      |      /
+    //            \    _|__   /
+    //            --   |  |   --
+    //                 ---
+    //
+    //
+    public Rect LocateTextBox(Rect inputRect, int width, int height, int imageWidth){
+        Rect newRect = new Rect();
+        newRect.width = width;
+        newRect.height = height;
+
+        // top left
+        if (inputRect.x - width >= 0 && inputRect.y - height >=0){
+            newRect.x = inputRect.x - width;
+            newRect.y = inputRect.y - height;
+        }
+        // top right
+        else if (inputRect.x + inputRect.width + 2 * width <= imageWidth
+                && inputRect.y - 2*height <= 0) {
+            newRect.x = inputRect.x + inputRect.width + 2 * width;
+            newRect.y = inputRect.y - 2 * height;
+        }
+        // top
+        else if (inputRect.y - 2*height >= 0){
+            newRect.x = inputRect.x;
+            newRect.y = inputRect.y - 2*height;
+        }
+        // left
+        else if (inputRect.x - width >= 0){
+            newRect.x = inputRect.x - width;
+            newRect.y = inputRect.y;
+        }
+        // right
+        else if (inputRect.x + inputRect.width + 2 * width <= imageWidth){
+            newRect.x = inputRect.x + inputRect.width + 2 * width;
+            newRect.y = inputRect.y;
+        }
+        else
+        {
+            newRect.x = -1;
+            newRect.y = -1;
+        }
+
+        return newRect;
+    }
+
     public Bitmap DetecteFace(Bitmap inputPic, Context context){
 
         try {
@@ -79,9 +135,13 @@ public class FaceDetector {
 
             // drawing a rectangle on the face
             // TODO: we need to draw bubble and text instead
+            Rect[] rects = faceDetections.toArray();
             for (Rect rect : faceDetections.toArray()) {
-                Imgproc.rectangle(image, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
+                Rect newRect = LocateTextBox(rect, rect.width, rect.height, inputPic.getWidth());
+                Imgproc.rectangle(image, new Point(newRect.x, newRect.y), new Point(newRect.x + newRect.width, newRect.y + newRect.height),
                         new Scalar(0, 255, 0));
+//                Imgproc.rectangle(image, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
+//                        new Scalar(0, 255, 0));
             }
 
             Bitmap.Config conf = Bitmap.Config.ARGB_8888; // see other conf types
