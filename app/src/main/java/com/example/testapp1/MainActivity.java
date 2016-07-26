@@ -192,6 +192,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
+
+        protected void CleanLayout()
+        {
+            mBtn.setVisibility(View.INVISIBLE);
+            mLinearLayout.setBackgroundResource(0);
+        }
+
+
         @Override
         public void onAttach(Activity activity)
         {
@@ -300,8 +308,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (mSelectedImageUri != null)
             {
-                mBtn.setVisibility(View.INVISIBLE);
-                mLinearLayout.setBackgroundResource(0);
+                CleanLayout();
             }
 
             mBtn.setOnClickListener(new View.OnClickListener() {
@@ -381,7 +388,7 @@ public class MainActivity extends AppCompatActivity {
 
                     mSelectedImagePath = mActivity.getPath(selectedImageUri);
                     mSelectedImagePath = mActivity.getRealPathFromURI(getContext(), selectedImageUri);
-                    mBtn.setVisibility(View.INVISIBLE);
+                    CleanLayout();
                 }
             }
         }
@@ -448,7 +455,9 @@ public class MainActivity extends AppCompatActivity {
             View rootView = super.onCreateView(inflater, container, savedInstanceState);
 
             if (mBitmap != null)
-                mBtn.setVisibility(View.INVISIBLE);
+            {
+                CleanLayout();
+            }
 
             mBtn.setOnClickListener(new View.OnClickListener() {
 
@@ -502,7 +511,7 @@ public class MainActivity extends AppCompatActivity {
 
                     SetBitmapOnImageView(bitmap);
                     mBitmap = bitmap;
-                    mBtn.setVisibility(View.INVISIBLE);
+                    CleanLayout();
                 }
             }
         }
