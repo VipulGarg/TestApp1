@@ -9,11 +9,14 @@ import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.content.CursorLoader;
+import android.support.v4.view.PagerAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -35,8 +38,19 @@ import android.widget.ImageView;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
+
 import org.opencv.android.Utils;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfRect;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
@@ -49,12 +63,12 @@ import java.io.InputStream;
 public class MainActivity extends AppCompatActivity {
 
     /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * The {@link PagerAdapter} that will provide
      * fragments for each of the sections. We use a
      * {@link FragmentPagerAdapter} derivative, which will keep every
      * loaded fragment in memory. If this becomes too memory intensive, it
      * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     * {@link FragmentStatePagerAdapter}.
      */
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
@@ -62,6 +76,11 @@ public class MainActivity extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,8 +94,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
-        if (mSectionsPagerAdapter == null)
-        {
+        if (mSectionsPagerAdapter == null) {
             mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         }
 
@@ -99,6 +117,9 @@ public class MainActivity extends AppCompatActivity {
 
         System.loadLibrary("opencv_java3");
 
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
 
@@ -130,15 +151,15 @@ public class MainActivity extends AppCompatActivity {
      */
     public String getPath(Uri uri) {
         // just some safety built in
-        if( uri == null ) {
+        if (uri == null) {
             // TODO perform some logging or show user feedback
             return null;
         }
         // try to retrieve the image from the media store first
         // this will only work for images selected from gallery
-        String[] projection = { MediaStore.Images.Media.DATA };
+        String[] projection = {MediaStore.Images.Media.DATA};
         Cursor cursor = managedQuery(uri, projection, null, null, null);
-        if( cursor != null ){
+        if (cursor != null) {
             int column_index = cursor
                     .getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
             cursor.moveToFirst();
@@ -151,8 +172,8 @@ public class MainActivity extends AppCompatActivity {
     public String getRealPathFromURI(Context context, Uri contentUri) {
         Cursor cursor = null;
         try {
-            String[] proj = { MediaStore.Images.Media.DATA };
-            cursor = context.getContentResolver().query(contentUri,  proj, null, null, null);
+            String[] proj = {MediaStore.Images.Media.DATA};
+            cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
             int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
             cursor.moveToFirst();
             return cursor.getString(column_index);
@@ -163,9 +184,48 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void SetImage()
-    {
+    public void SetImage() {
         findViewById(R.id.section_image);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.example.testapp1/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.example.testapp1/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
+        client.disconnect();
     }
 
     /**
@@ -189,31 +249,23 @@ public class MainActivity extends AppCompatActivity {
         public PlaceholderFragment() {
         }
 
-        public void SetImageUri(Uri uri)
-        {
+        public void SetImageUri(Uri uri) {
             if (uri == null)
                 return;
-            
-            try
-            {
+
+            try {
                 mImageView.setImageDrawable(Drawable.createFromStream(mActivity.getContentResolver().openInputStream(uri), null));
-            }
-            catch(FileNotFoundException fe)
-            {
+            } catch (FileNotFoundException fe) {
                 return;
-            }
-            catch(Exception e)
-            {
+            } catch (Exception e) {
                 return;
             }
         }
 
 
         @Override
-        public void onAttach(Activity activity)
-        {
-            if (activity instanceof MainActivity)
-            {
+        public void onAttach(Activity activity) {
+            if (activity instanceof MainActivity) {
                 mActivity = (MainActivity) activity;
             }
             super.onAttach(activity);
@@ -245,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
 
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-            final AlertDialog.Builder alt_bld = new AlertDialog.Builder(getActivity());
+            final Builder alt_bld = new Builder(getActivity());
             alt_bld.setMessage("apprika target achieve...");
             alt_bld.setCancelable(true);
 
@@ -255,48 +307,9 @@ public class MainActivity extends AppCompatActivity {
             ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
             mImageView = imageView;
 
-            try{
-                InputStream is = getContext().getResources().openRawResource(R.raw.leofacedet);
-                File cascadeDir = getContext().getDir("cascade", Context.MODE_PRIVATE);
-                File mCascadeFile = new File(cascadeDir, "leofacedet.xml");
-                FileOutputStream os = new FileOutputStream(mCascadeFile);
-
-                byte[] buffer = new byte[4096];
-                int bytesRead;
-                while ((bytesRead = is.read(buffer)) != -1) {
-                    os.write(buffer, 0, bytesRead);
-                }
-                is.close();
-                os.close();
-                CascadeClassifier mCascadeER = new CascadeClassifier(mCascadeFile.getAbsolutePath());
-                if (mCascadeER.empty()){
-                    String sourceImgName = "faces1.png";
-                    String resultImgName = "result_image.png";
-                }
-
-                FaceDetector faceDetector = new FaceDetector();
-                String sourceImgName = "faces1.png";
-                String resultImgName = "result_image.png";
-
-                Mat resultImage = faceDetector.DetecteFace(sourceImgName, mCascadeER);
-
-                Imgproc.cvtColor(resultImage, resultImage, Imgproc.COLOR_GRAY2RGBA, 4);
-                Bitmap bmp = Bitmap.createBitmap(resultImage.cols(), resultImage.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(resultImage, bmp);
-                imageView.setImageBitmap(bmp);
-
-                faceDetector.SaveImage(resultImgName, resultImage);
-            }
-            catch (Exception e) {
-
-            }
-
-            if (mSelectedImageUri == null)
-            {
+            if (mSelectedImageUri == null) {
                 imageView.setImageResource(R.drawable.section_1);
-            }
-            else
-            {
+            } else {
                 SetImageUri(mSelectedImageUri);
             }
             imageView.setOnClickListener(new View.OnClickListener() {
@@ -314,21 +327,16 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
 
-                    switch (event.getAction())
-                    {
-                        case MotionEvent.ACTION_DOWN:
-                        {
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN: {
                             ImageView view = (ImageView) v;
                             //overlay is black with transparency of 0x77 (119)
                             view.getDrawable().setColorFilter(0x77000000, PorterDuff.Mode.SRC_ATOP);
                             view.invalidate();
 
-
-
                             break;
                         }
-                        case MotionEvent.ACTION_UP:
-                        {
+                        case MotionEvent.ACTION_UP: {
                             //alt_bld.show();
                             Intent intent = new Intent();
                             intent.setType("image/*");
@@ -337,8 +345,7 @@ public class MainActivity extends AppCompatActivity {
                                     "Select Picture"), SELECT_PICTURE);
                         }
 
-                        case MotionEvent.ACTION_CANCEL:
-                        {
+                        case MotionEvent.ACTION_CANCEL: {
                             ImageView view = (ImageView) v;
                             //clear the overlay
                             view.getDrawable().clearColorFilter();
@@ -354,12 +361,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onActivityResult(int requestCode, int resultCode, Intent data)
-        {
-            if (resultCode == RESULT_OK)
-            {
-                if (requestCode == SELECT_PICTURE)
-                {
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            if (resultCode == RESULT_OK) {
+                if (requestCode == SELECT_PICTURE) {
                     Uri selectedImageUri = data.getData();
                     mSelectedImageUri = selectedImageUri;
                     SetImageUri(selectedImageUri);
@@ -374,7 +378,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     *  Fragment with Camera View for Pictures
+     * Fragment with Camera View for Pictures
      */
     public static class CameraPictureFragment extends Fragment {
         /**
@@ -394,31 +398,23 @@ public class MainActivity extends AppCompatActivity {
         public CameraPictureFragment() {
         }
 
-        public void SetImageUri(Uri uri)
-        {
+        public void SetImageUri(Uri uri) {
             if (uri == null)
                 return;
 
-            try
-            {
+            try {
                 mImageView.setImageDrawable(Drawable.createFromStream(mActivity.getContentResolver().openInputStream(uri), null));
-            }
-            catch(FileNotFoundException fe)
-            {
+            } catch (FileNotFoundException fe) {
                 return;
-            }
-            catch(Exception e)
-            {
+            } catch (Exception e) {
                 return;
             }
         }
 
 
         @Override
-        public void onAttach(Activity activity)
-        {
-            if (activity instanceof MainActivity)
-            {
+        public void onAttach(Activity activity) {
+            if (activity instanceof MainActivity) {
                 mActivity = (MainActivity) activity;
             }
             super.onAttach(activity);
@@ -450,7 +446,7 @@ public class MainActivity extends AppCompatActivity {
 
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-            final AlertDialog.Builder alt_bld = new AlertDialog.Builder(getActivity());
+            final Builder alt_bld = new Builder(getActivity());
             alt_bld.setMessage("apprika target achieve...");
             alt_bld.setCancelable(true);
 
@@ -459,12 +455,9 @@ public class MainActivity extends AppCompatActivity {
 
             ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
             mImageView = imageView;
-            if (mSelectedImageUri == null)
-            {
+            if (mSelectedImageUri == null) {
                 imageView.setImageResource(R.drawable.section_1);
-            }
-            else
-            {
+            } else {
                 SetImageUri(mSelectedImageUri);
             }
             imageView.setOnClickListener(new View.OnClickListener() {
@@ -482,25 +475,21 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
 
-                    switch (event.getAction())
-                    {
-                        case MotionEvent.ACTION_DOWN:
-                        {
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN: {
                             ImageView view = (ImageView) v;
                             //overlay is black with transparency of 0x77 (119)
                             view.getDrawable().setColorFilter(0x77000000, PorterDuff.Mode.SRC_ATOP);
                             view.invalidate();
                             break;
                         }
-                        case MotionEvent.ACTION_UP:
-                        {
+                        case MotionEvent.ACTION_UP: {
                             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                             startActivityForResult(intent,
                                     CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
                         }
 
-                        case MotionEvent.ACTION_CANCEL:
-                        {
+                        case MotionEvent.ACTION_CANCEL: {
                             ImageView view = (ImageView) v;
                             //clear the overlay
                             view.getDrawable().clearColorFilter();
@@ -516,12 +505,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onActivityResult(int requestCode, int resultCode, Intent data)
-        {
-            if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE)
-            {
-                if (resultCode == Activity.RESULT_OK)
-                {
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
+                if (resultCode == Activity.RESULT_OK) {
 
                     Bitmap bmp = (Bitmap) data.getExtras().get("data");
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -554,12 +540,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public Fragment getItem(int position)
-        {
+        public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            switch (position)
-            {
+            switch (position) {
                 case 0:
                 case 2:
                     return PlaceholderFragment.newInstance(position + 1);
@@ -571,17 +555,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public int getCount()
-        {
+        public int getCount() {
             // Show 3 total pages.
             return 3;
         }
 
         @Override
-        public CharSequence getPageTitle(int position)
-        {
-            switch (position)
-            {
+        public CharSequence getPageTitle(int position) {
+            switch (position) {
                 case 0:
                     return "SECTION 1";
                 case 1:
