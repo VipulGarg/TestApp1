@@ -143,11 +143,11 @@ public class MainActivity extends AppCompatActivity {
     {
         Scalar bubbleColor = new Scalar(255,255,255);
         Scalar textColor = new Scalar(0,0,0);
-        double textSize = 0.5;
-        double textMargin = 2;
+        double textSize = 0.4;
 
-        double minPuffSize = 5;
-        double maxPuffSize = 30;
+        int minPuffSize = 20;
+        int maxPuffSize = 50;
+        double overlapFactor = 1.0; //1.0 is no overlap, 0.0 is 100% overlap (and infinite loops)
 
         double top = Math.min(p1.y, p2.y);
         double left = Math.min(p1.x, p2.x);
@@ -156,23 +156,55 @@ public class MainActivity extends AppCompatActivity {
 
         // draw rectangle
         Imgproc.rectangle(target, p1, p2, bubbleColor, -1 /*negative thickness means filled*/);
-        // draw bubble text
-        // TODO code up some word wrap?
-        Size textBoxSize = Imgproc.getTextSize(text, Core.FONT_HERSHEY_SIMPLEX, textSize, 1 /* thickness */, null);
-        Imgproc.putText(target, text, new Point(left+textMargin, top+textBoxSize.height+textMargin),
-                Core.FONT_HERSHEY_SIMPLEX, textSize, textColor);
         // TODO draw bubble cloud border
         double i;
         // top
-//        for (i=left; i<left+width; )
-//        {
-//            double puffSize = ThreadLocalRandom.current().nextDouble(minPuffSize, maxPuffSize);
-//        }
+        for (i=left; i<left+width; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > left+width)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(i+puffSize*overlapFactor, top);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += puffSize*2*overlapFactor;
+        }
         // bottom
-        // left
+        for (i=left; i<left+width; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > left+width)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(i+puffSize*overlapFactor, top+height);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += puffSize*2*overlapFactor;
+        }
+        // left //TODO left/right overlap factor
+        for (i=top; i<top+height; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > top+height)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(left, i+puffSize);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += puffSize*2;
+        }
         // right
+        for (i=top; i<top+height; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > top+height)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(left+width, i+puffSize);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += puffSize*2;
+        }
         // draw bubble chain to target // TODO make it pretty
         Imgproc.line(target, targetPoint, new Point(left + width/2, top + height/2), bubbleColor, 2);
+        // draw bubble text
+        // TODO code up some word wrap?
+        Size textBoxSize = Imgproc.getTextSize(text, Core.FONT_HERSHEY_SIMPLEX, textSize, 1 /* thickness */, null);
+        Imgproc.putText(target, text, new Point(left, top+textBoxSize.height),
+                Core.FONT_HERSHEY_SIMPLEX, textSize, textColor);
     }
 
     /**
@@ -333,7 +365,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // make a blank Mat image
                 Mat blank = new Mat(800, 600, CvType.CV_8UC3, new Scalar(128,128,128));
-                DrawThoughtBubble(blank, new Point(10,10), new Point(200,200), new Point(200,300),
+                DrawThoughtBubble(blank, new Point(50,50), new Point(500,200), new Point(200,400),
                         "//oneweek is awesome!");
 
                 //convert image to bitmap and display
