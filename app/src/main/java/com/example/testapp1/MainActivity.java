@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -32,9 +33,16 @@ import android.widget.ImageView;
 
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
-import org.opencv.core.Mat;
 
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.CascadeClassifier;
+
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -85,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
         */
 
         System.loadLibrary("opencv_java3");
+
     }
 
 
@@ -221,8 +230,6 @@ public class MainActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
 
-
-
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
             final AlertDialog.Builder alt_bld = new AlertDialog.Builder(getActivity());
@@ -234,6 +241,42 @@ public class MainActivity extends AppCompatActivity {
 
             ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
             mImageView = imageView;
+
+            try{
+                InputStream is = getContext().getResources().openRawResource(R.raw.leofacedet);
+                File cascadeDir = getContext().getDir("cascade", Context.MODE_PRIVATE);
+                File mCascadeFile = new File(cascadeDir, "leofacedet.xml");
+                FileOutputStream os = new FileOutputStream(mCascadeFile);
+
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, bytesRead);
+                }
+                is.close();
+                os.close();
+                CascadeClassifier mCascadeER = new CascadeClassifier(mCascadeFile.getAbsolutePath());
+                if (mCascadeER.empty()){
+                    String sourceImgName = "faces1.png";
+                    String resultImgName = "result_image.png";
+                }
+
+                FaceDetector faceDetector = new FaceDetector();
+                String sourceImgName = "faces1.png";
+                String resultImgName = "result_image.png";
+
+                Mat resultImage = faceDetector.DetecteFace(sourceImgName, mCascadeER);
+
+                Imgproc.cvtColor(resultImage, resultImage, Imgproc.COLOR_GRAY2RGBA, 4);
+                Bitmap bmp = Bitmap.createBitmap(resultImage.cols(), resultImage.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(resultImage, bmp);
+                imageView.setImageBitmap(bmp);
+
+                faceDetector.SaveImage(resultImgName, resultImage);
+            }
+            catch (Exception e){
+
+            }
             imageView.setOnClickListener(new View.OnClickListener() {
 
                 @Override
@@ -258,13 +301,8 @@ public class MainActivity extends AppCompatActivity {
                             view.getDrawable().setColorFilter(0x77000000, PorterDuff.Mode.SRC_ATOP);
                             view.invalidate();
 
-//                            FaceDetector faceDetector = new FaceDetector();
-//
-//                            String sourceImgName = "faces1.png";
-//                            String resultImgName = "result_image.png";
-//
-//                            Mat resultImage = faceDetector.DetecteFace(sourceImgName);
-//                            faceDetector.SaveImage(resultImgName, resultImage);
+
+
                             break;
                         }
                         case MotionEvent.ACTION_UP:

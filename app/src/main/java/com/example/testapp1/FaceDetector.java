@@ -15,6 +15,8 @@ import org.opencv.videoio.*;   // VideoCapture
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.InputStream;
+
 public class FaceDetector {
 
     public CascadeClassifier LoadClassifier(){
@@ -35,12 +37,16 @@ public class FaceDetector {
         Imgcodecs.imwrite(resultImgName, image);
     }
 
-    public Mat DetecteFace(String imageName){
+    public Mat DetecteFace(String imageName, CascadeClassifier faceDetector){
+
+        Mat image = Imgcodecs.imread(imageName);
+
+//        String faceCascadeName = "leofacedet.xml";
+//        CascadeClassifier faceDetector = new CascadeClassifier();
+//
+//        Boolean result = faceDetector.load(faceCascadeName);
+
         MatOfRect faceDetections = new MatOfRect();
-
-        Mat image = LoadImage(imageName);
-        CascadeClassifier faceDetector = LoadClassifier();
-
         faceDetector.detectMultiScale(image, faceDetections);
 
         // drawing a rectangle on the face
