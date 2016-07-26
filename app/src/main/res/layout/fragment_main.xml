@@ -19,7 +19,6 @@
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:scaleType="fitXY"
-        android:clickable="true"
-        android:src="@drawable/section_1" />
+        android:clickable="true" />
 
 </RelativeLayout>

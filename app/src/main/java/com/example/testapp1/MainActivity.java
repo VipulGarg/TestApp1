@@ -65,7 +65,10 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        if (mSectionsPagerAdapter == null)
+        {
+            mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        }
 
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
@@ -167,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
         private static final int SELECT_PICTURE = 1;
 
         private String mSelectedImagePath;
-        private Uri mSelectedImageUri;
+        private Uri mSelectedImageUri = null;
 
         private MainActivity mActivity;
         private ImageView mImageView;
@@ -234,6 +237,14 @@ public class MainActivity extends AppCompatActivity {
 
             ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
             mImageView = imageView;
+            if (mSelectedImageUri == null)
+            {
+                imageView.setImageResource(R.drawable.section_1);
+            }
+            else
+            {
+                SetImageUri(mSelectedImageUri);
+            }
             imageView.setOnClickListener(new View.OnClickListener() {
 
                 @Override
