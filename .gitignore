@@ -12,12 +12,4 @@
 /openCVLibrary310/intermediates
 /openCVLibrary310/generated/
 
-
 app/libs/
-/openCVLibrary310/build/intermediates/incremental/mergeReleaseAssets/merger.xml
-/openCVLibrary310/build/intermediates/incremental/mergeReleaseShaders/merger.xml
-/openCVLibrary310/build/intermediates/incremental/packageReleaseResources/merger.xml
-/openCVLibrary310/build/intermediates/incremental/mergeReleaseJniLibFolders/merger.xml
-/openCVLibrary310/build/intermediates/bundles/release/res/values/values.xml
-/openCVLibrary310/build/intermediates/bundles/release/AndroidManifest.xml
-/openCVLibrary310/build/intermediates/bundles/release/aapt/AndroidManifest.xml
