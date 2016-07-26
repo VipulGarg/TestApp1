@@ -42,10 +42,6 @@ import android.widget.ImageView;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.common.api.GoogleApiClient;
-
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -80,11 +76,6 @@ public class MainActivity extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,10 +113,6 @@ public class MainActivity extends AppCompatActivity {
         */
 
         System.loadLibrary("opencv_java3");
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
 
@@ -231,6 +218,16 @@ public class MainActivity extends AppCompatActivity {
         {
             mBtn.setVisibility(View.INVISIBLE);
             mLinearLayout.setBackgroundResource(0);
+        }
+
+
+        protected void RunFaceDetectionAndUpdate(Bitmap inputPic)
+        {
+
+            FaceDetector faceDetector = new FaceDetector();
+            Bitmap outputPic = faceDetector.DetecteFace(inputPic, getContext());
+
+            SetBitmapOnImageView(outputPic);
         }
 
 
@@ -349,11 +346,8 @@ public class MainActivity extends AppCompatActivity {
                     Uri selectedImageUri = data.getData();
                     try
                     {
-
                         Bitmap bitmap = MediaStore.Images.Media.getBitmap(mActivity.getContentResolver(), selectedImageUri);
-                        mBitmap = bitmap;
-                        SetBitmapOnImageView(bitmap);
-                        CleanLayout();
+                        RunFaceDetectionAndUpdate(bitmap);
                     }
                     catch (Exception e)
                     {
@@ -427,14 +421,10 @@ public class MainActivity extends AppCompatActivity {
                     byte[] byteArray = stream.toByteArray();
 
                     // convert byte array to Bitmap
-
                     Bitmap inputPic= BitmapFactory.decodeByteArray(byteArray, 0,
                             byteArray.length);
 
-                    FaceDetector faceDetector = new FaceDetector();
-                    Bitmap outputPic = faceDetector.DetecteFace(inputPic, getContext());
-
-                    SetBitmapOnImageView(outputPic);
+                    RunFaceDetectionAndUpdate(inputPic);
                 }
             }
         }
