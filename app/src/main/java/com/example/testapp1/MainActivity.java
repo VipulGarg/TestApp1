@@ -191,8 +191,6 @@ public class MainActivity extends AppCompatActivity {
         public BaseImageFragment() {
         }
 
-
-
         protected void CleanLayout()
         {
             mBtn.setVisibility(View.INVISIBLE);
@@ -267,25 +265,6 @@ public class MainActivity extends AppCompatActivity {
             {
                 return;
             }
-        }
-
-
-        @Override
-        public void onAttach(Activity activity)
-        {
-            if (activity instanceof MainActivity)
-            {
-                mActivity = (MainActivity) activity;
-            }
-            super.onAttach(activity);
-        }
-
-        // this method is only called once for this fragment
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            // retain this fragment
-            setRetainInstance(true);
         }
 
         /**
@@ -415,25 +394,6 @@ public class MainActivity extends AppCompatActivity {
             if (bitmap == null)
                 return;
             mImageView.setImageBitmap(bitmap);
-        }
-
-
-        @Override
-        public void onAttach(Activity activity)
-        {
-            if (activity instanceof MainActivity)
-            {
-                mActivity = (MainActivity) activity;
-            }
-            super.onAttach(activity);
-        }
-
-        // this method is only called once for this fragment
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            // retain this fragment
-           setRetainInstance(true);
         }
 
         /**
