@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
 
         int minPuffSize = 20;
         int maxPuffSize = 50;
-        double overlapFactor = 1.0; //1.0 is no overlap, 0.0 is 100% overlap (and infinite loops)
+        int overlap = 5; //pixels to overlap on each side of a puff
 
         double top = Math.min(p1.y, p2.y);
         double left = Math.min(p1.x, p2.x);
@@ -164,9 +164,9 @@ public class MainActivity extends AppCompatActivity {
             int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
             if (i+puffSize*2 > left+width)
                 puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
-            Point center = new Point(i+puffSize*overlapFactor, top);
+            Point center = new Point(i+puffSize-overlap, top);
             Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
-            i += puffSize*2*overlapFactor;
+            i += (puffSize-overlap)*2;
         }
         // bottom
         for (i=left; i<left+width; )
@@ -174,9 +174,9 @@ public class MainActivity extends AppCompatActivity {
             int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
             if (i+puffSize*2 > left+width)
                 puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
-            Point center = new Point(i+puffSize*overlapFactor, top+height);
+            Point center = new Point(i+puffSize-overlap, top+height);
             Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
-            i += puffSize*2*overlapFactor;
+            i += (puffSize-overlap)*2;
         }
         // left //TODO left/right overlap factor
         for (i=top; i<top+height; )
@@ -184,9 +184,9 @@ public class MainActivity extends AppCompatActivity {
             int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
             if (i+puffSize*2 > top+height)
                 puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
-            Point center = new Point(left, i+puffSize);
+            Point center = new Point(left, i+puffSize-overlap);
             Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
-            i += puffSize*2;
+            i += (puffSize-overlap)*2;
         }
         // right
         for (i=top; i<top+height; )
@@ -194,9 +194,9 @@ public class MainActivity extends AppCompatActivity {
             int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
             if (i+puffSize*2 > top+height)
                 puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
-            Point center = new Point(left+width, i+puffSize);
+            Point center = new Point(left+width, i+puffSize-overlap);
             Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
-            i += puffSize*2;
+            i += (puffSize-overlap)*2;
         }
         // draw bubble chain to target // TODO make it pretty
         Imgproc.line(target, targetPoint, new Point(left + width/2, top + height/2), bubbleColor, 2);
