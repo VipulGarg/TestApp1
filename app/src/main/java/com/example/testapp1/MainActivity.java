@@ -187,8 +187,22 @@ public class MainActivity extends AppCompatActivity {
         protected ImageView mImageView;
         protected Button mBtn;
         protected LinearLayout mLinearLayout;
+        protected Bitmap mBitmap;
 
         public BaseImageFragment() {
+        }
+
+        protected Bitmap GetBitmap() { return mBitmap; }
+        protected void SetBitmap(Bitmap bitmap) { mBitmap = bitmap; }
+
+        protected void SetBitmapOnImageView(Bitmap bitmap)
+        {
+            if (bitmap == null)
+                return;
+
+            mImageView.setImageBitmap(bitmap);
+            mBitmap = bitmap;
+            CleanLayout();
         }
 
         protected void CleanLayout()
@@ -231,6 +245,15 @@ public class MainActivity extends AppCompatActivity {
             ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
             mImageView = imageView;
 
+            if (mBitmap == null)
+            {
+                mImageView.setImageResource(R.drawable.section_1);
+            }
+            else
+            {
+                SetBitmapOnImageView(mBitmap);
+            }
+
             return rootView;
         }
     }
@@ -241,9 +264,6 @@ public class MainActivity extends AppCompatActivity {
     public static class LoadImageFragment extends BaseImageFragment {
 
         private static final int SELECT_PICTURE = 1;
-
-        private String mSelectedImagePath;
-        private Uri mSelectedImageUri = null;
 
         public LoadImageFragment() {
         }
@@ -284,11 +304,6 @@ public class MainActivity extends AppCompatActivity {
                                  Bundle savedInstanceState) {
 
             View rootView = super.onCreateView(inflater, container, savedInstanceState);
-
-            if (mSelectedImageUri != null)
-            {
-                CleanLayout();
-            }
 
             mBtn.setOnClickListener(new View.OnClickListener() {
 
@@ -343,14 +358,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
 
-            if (mSelectedImageUri == null)
-            {
-                mImageView.setImageResource(R.drawable.section_1);
-            }
-            else
-            {
-                SetImageUri(mSelectedImageUri);
-            }
             return rootView;
         }
 
@@ -362,12 +369,18 @@ public class MainActivity extends AppCompatActivity {
                 if (requestCode == SELECT_PICTURE)
                 {
                     Uri selectedImageUri = data.getData();
-                    mSelectedImageUri = selectedImageUri;
-                    SetImageUri(selectedImageUri);
+                    try
+                    {
 
-                    mSelectedImagePath = mActivity.getPath(selectedImageUri);
-                    mSelectedImagePath = mActivity.getRealPathFromURI(getContext(), selectedImageUri);
-                    CleanLayout();
+                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(mActivity.getContentResolver(), selectedImageUri);
+                        mBitmap = bitmap;
+                        SetBitmapOnImageView(bitmap);
+                        CleanLayout();
+                    }
+                    catch (Exception e)
+                    {
+                        return;
+                    }
                 }
             }
         }
@@ -382,19 +395,7 @@ public class MainActivity extends AppCompatActivity {
 
         private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 1888;
 
-        private Bitmap mBitmap = null;
-
         public CameraImageFragment() { }
-
-        public Bitmap GetBitmap() { return mBitmap; }
-        public void SetBitmap(Bitmap bitmap) { mBitmap = bitmap; }
-
-        private void SetBitmapOnImageView(Bitmap bitmap)
-        {
-            if (bitmap == null)
-                return;
-            mImageView.setImageBitmap(bitmap);
-        }
 
         /**
          * Returns a new instance of this fragment for the given section
@@ -414,11 +415,6 @@ public class MainActivity extends AppCompatActivity {
 
             View rootView = super.onCreateView(inflater, container, savedInstanceState);
 
-            if (mBitmap != null)
-            {
-                CleanLayout();
-            }
-
             mBtn.setOnClickListener(new View.OnClickListener() {
 
                 @Override
@@ -437,15 +433,6 @@ public class MainActivity extends AppCompatActivity {
             /*
             TextView textView = (TextView) rootView.findViewById(R.id.section_label);
             textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));*/
-
-            if (mBitmap == null)
-            {
-                mImageView.setImageResource(R.drawable.section_1);
-            }
-            else
-            {
-                SetBitmapOnImageView(mBitmap);
-            }
 
             return rootView;
         }
@@ -470,8 +457,6 @@ public class MainActivity extends AppCompatActivity {
                             byteArray.length);
 
                     SetBitmapOnImageView(bitmap);
-                    mBitmap = bitmap;
-                    CleanLayout();
                 }
             }
         }
