@@ -137,9 +137,14 @@ public class FaceDetector {
             // TODO: we need to draw bubble and text instead
             Rect[] rects = faceDetections.toArray();
             for (Rect rect : faceDetections.toArray()) {
-                Rect newRect = LocateTextBox(rect, rect.width, rect.height, inputPic.getWidth());
-                Imgproc.rectangle(image, new Point(newRect.x, newRect.y), new Point(newRect.x + newRect.width, newRect.y + newRect.height),
+                Imgproc.rectangle(image, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
                         new Scalar(0, 255, 0));
+
+                Rect newRect = LocateTextBox(rect, rect.width, rect.height, inputPic.getWidth());
+                if (newRect.x != -1 && newRect.y != -1){
+                    Imgproc.rectangle(image, new Point(newRect.x, newRect.y), new Point(newRect.x + newRect.width, newRect.y + newRect.height),
+                            new Scalar(0, 255, 0));
+                }
 //                Imgproc.rectangle(image, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
 //                        new Scalar(0, 255, 0));
             }
