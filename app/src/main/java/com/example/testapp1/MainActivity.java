@@ -26,6 +26,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -242,6 +243,8 @@ public class MainActivity extends AppCompatActivity {
         protected Button mBtn;
         protected LinearLayout mLinearLayout;
         protected Bitmap mBitmap;
+        protected FloatingActionButton mFabNew;
+        protected FloatingActionButton mFabCancel;
 
         public BaseImageFragment() {
         }
@@ -263,12 +266,14 @@ public class MainActivity extends AppCompatActivity {
         {
             mBtn.setVisibility(View.INVISIBLE);
             mLinearLayout.setBackgroundResource(0);
+
+            mFabCancel.setVisibility(View.VISIBLE);
+            mFabNew.setVisibility(View.VISIBLE);
         }
 
 
         protected void RunFaceDetectionAndUpdate(Bitmap inputPic)
         {
-
             FaceDetector faceDetector = new FaceDetector();
             Bitmap outputPic = faceDetector.DetecteFace(inputPic, getContext());
 
@@ -298,20 +303,39 @@ public class MainActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
 
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
             LinearLayout linearLayout = (LinearLayout) rootView.findViewById(R.id.section_ll);
             mLinearLayout = linearLayout;
             Button btn = (Button) rootView.findViewById(R.id.section_button);
-            btn.setText("Load a Picture");
             mBtn = btn;
 
             ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
             mImageView = imageView;
 
+            FloatingActionButton fabNew = (FloatingActionButton) rootView.findViewById(R.id.fab_new);
+            mFabNew = fabNew;
+
+            FloatingActionButton fabCancel = (FloatingActionButton) rootView.findViewById(R.id.fab_cancel);
+            mFabCancel = fabCancel;
+            mFabCancel.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View view)
+                {
+                    mBitmap = null;
+                    mImageView.setImageResource(R.drawable.section_1);
+                    mBtn.setVisibility(View.VISIBLE);
+                    mFabCancel.setVisibility(View.INVISIBLE);
+                    mFabNew.setVisibility(View.INVISIBLE);
+                }
+            });
+
             if (mBitmap == null)
             {
                 mImageView.setImageResource(R.drawable.section_1);
+                mFabCancel.setVisibility(View.INVISIBLE);
+                mFabNew.setVisibility(View.INVISIBLE);
             }
             else
             {
@@ -327,6 +351,7 @@ public class MainActivity extends AppCompatActivity {
      */
     public static class LoadImageFragment extends BaseImageFragment {
 
+        private static final String TAG = "TAG.LoadImageFragment";
         private static final int SELECT_PICTURE = 1;
 
         public LoadImageFragment() {
@@ -364,6 +389,7 @@ public class MainActivity extends AppCompatActivity {
 
             View rootView = super.onCreateView(inflater, container, savedInstanceState);
 
+            mBtn.setText("Load a Picture");
             mBtn.setOnClickListener(new View.OnClickListener() {
 
                 @Override
@@ -375,6 +401,19 @@ public class MainActivity extends AppCompatActivity {
                             "Select Picture"), SELECT_PICTURE);
                 }
 
+            });
+
+            mFabNew.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View view)
+                {
+                    Intent intent = new Intent();
+                    intent.setType("image/*");
+                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                    startActivityForResult(Intent.createChooser(intent,
+                            "Select Picture"), SELECT_PICTURE);
+                }
             });
 
             final Builder alt_bld = new Builder(getActivity());
@@ -432,16 +471,30 @@ public class MainActivity extends AppCompatActivity {
 
             View rootView = super.onCreateView(inflater, container, savedInstanceState);
 
+            mBtn.setText("Take a Picture");
             mBtn.setOnClickListener(new View.OnClickListener() {
 
                 @Override
-                public void onClick(View view) {
+                public void onClick(View view)
+                {
                     Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                     startActivityForResult(intent,
                             CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
                 }
 
             });
+
+            mFabNew.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View view)
+                {
+                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(intent,
+                            CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+                }
+            });
+
 
             final Builder alt_bld = new Builder(getActivity());
             alt_bld.setMessage("apprika target achieve...");
@@ -487,6 +540,8 @@ public class MainActivity extends AppCompatActivity {
         private CameraImageFragment p2;
         private LoadImageFragment p3;
 
+        private SparseArray<Fragment> map;
+
         private Context mContext;
 
         public SectionsPagerAdapter(FragmentManager fm, Context context) {
@@ -498,19 +553,29 @@ public class MainActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
+
             switch (position) {
                 case 0:
                 case 2:
-                    return LoadImageFragment.newInstance(position + 1);
+                {
+                    Fragment fragment = LoadImageFragment.newInstance(position + 1);
+                    return fragment;
+                }
                 case 1:
-                    return CameraImageFragment.newInstance(position + 1);
+                {
+                    Fragment fragment = CameraImageFragment.newInstance(position + 1);
+                    return fragment;
+                }
                 default: // should never reach here
                     return null;
             }
         }
 
-        @Override
+        public Fragment getFragment(int pos) {
+            return map.get(pos);
+        }
 
+        @Override
         public int getCount()
         {
             // If camera is turned off, show the one page to select images only.
