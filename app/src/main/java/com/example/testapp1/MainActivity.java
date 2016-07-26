@@ -31,6 +31,7 @@ import android.widget.ImageView;
 
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
+import org.opencv.core.Mat;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -77,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
         });
         */
 
+        System.loadLibrary("opencv_java3");
     }
 
 
@@ -222,6 +224,14 @@ public class MainActivity extends AppCompatActivity {
                             //overlay is black with transparency of 0x77 (119)
                             view.getDrawable().setColorFilter(0x77000000, PorterDuff.Mode.SRC_ATOP);
                             view.invalidate();
+
+//                            FaceDetector faceDetector = new FaceDetector();
+//
+//                            String sourceImgName = "faces1.png";
+//                            String resultImgName = "result_image.png";
+//
+//                            Mat resultImage = faceDetector.DetecteFace(sourceImgName);
+//                            faceDetector.SaveImage(resultImgName, resultImage);
                             break;
                         }
                         case MotionEvent.ACTION_UP:
