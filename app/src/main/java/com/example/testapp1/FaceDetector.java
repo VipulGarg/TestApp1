@@ -73,7 +73,7 @@ public class FaceDetector {
         }
         // top right
         else if (inputRect.x + inputRect.width + width <= imageWidth
-                && inputRect.y - height <= 0) {
+                && inputRect.y - height >= 0) {
             newRect.x = inputRect.x + inputRect.width;
             newRect.y = inputRect.y - height;
         }
