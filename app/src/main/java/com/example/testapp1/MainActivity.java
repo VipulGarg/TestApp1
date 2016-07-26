@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -39,6 +40,7 @@ import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -372,6 +374,176 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     *  Fragment with Camera View for Pictures
+     */
+    public static class CameraPictureFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 1888;
+
+        private String mSelectedImagePath;
+        private Uri mSelectedImageUri = null;
+
+        private MainActivity mActivity;
+        private ImageView mImageView;
+
+        public CameraPictureFragment() {
+        }
+
+        public void SetImageUri(Uri uri)
+        {
+            if (uri == null)
+                return;
+
+            try
+            {
+                mImageView.setImageDrawable(Drawable.createFromStream(mActivity.getContentResolver().openInputStream(uri), null));
+            }
+            catch(FileNotFoundException fe)
+            {
+                return;
+            }
+            catch(Exception e)
+            {
+                return;
+            }
+        }
+
+
+        @Override
+        public void onAttach(Activity activity)
+        {
+            if (activity instanceof MainActivity)
+            {
+                mActivity = (MainActivity) activity;
+            }
+            super.onAttach(activity);
+        }
+
+        // this method is only called once for this fragment
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            // retain this fragment
+            setRetainInstance(true);
+        }
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        public static CameraPictureFragment newInstance(int sectionNumber) {
+            CameraPictureFragment fragment = new CameraPictureFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+
+            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+            final AlertDialog.Builder alt_bld = new AlertDialog.Builder(getActivity());
+            alt_bld.setMessage("apprika target achieve...");
+            alt_bld.setCancelable(true);
+
+            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
+            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
+
+            ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
+            mImageView = imageView;
+            if (mSelectedImageUri == null)
+            {
+                imageView.setImageResource(R.drawable.section_1);
+            }
+            else
+            {
+                SetImageUri(mSelectedImageUri);
+            }
+            imageView.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View view) {
+                    alt_bld.show();
+                }
+
+            });
+
+            //set the ontouch listener
+            imageView.setOnTouchListener(new View.OnTouchListener() {
+
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+
+                    switch (event.getAction())
+                    {
+                        case MotionEvent.ACTION_DOWN:
+                        {
+                            ImageView view = (ImageView) v;
+                            //overlay is black with transparency of 0x77 (119)
+                            view.getDrawable().setColorFilter(0x77000000, PorterDuff.Mode.SRC_ATOP);
+                            view.invalidate();
+                            break;
+                        }
+                        case MotionEvent.ACTION_UP:
+                        {
+                            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                            startActivityForResult(intent,
+                                    CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+                        }
+
+                        case MotionEvent.ACTION_CANCEL:
+                        {
+                            ImageView view = (ImageView) v;
+                            //clear the overlay
+                            view.getDrawable().clearColorFilter();
+                            view.invalidate();
+                            break;
+                        }
+                    }
+
+                    return true;
+                }
+            });
+            return rootView;
+        }
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent data)
+        {
+            if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE)
+            {
+                if (resultCode == Activity.RESULT_OK)
+                {
+
+                    Bitmap bmp = (Bitmap) data.getExtras().get("data");
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+
+                    bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    byte[] byteArray = stream.toByteArray();
+
+                    // convert byte array to Bitmap
+
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(byteArray, 0,
+                            byteArray.length);
+
+                    mImageView.setImageBitmap(bitmap);
+
+                }
+            }
+        }
+
+
+    }
+
+    /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
@@ -386,7 +558,16 @@ public class MainActivity extends AppCompatActivity {
         {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1);
+            switch (position)
+            {
+                case 0:
+                case 2:
+                    return PlaceholderFragment.newInstance(position + 1);
+                case 1:
+                    return CameraPictureFragment.newInstance(position + 1);
+                default:
+                    return PlaceholderFragment.newInstance(position + 1);
+            }
         }
 
         @Override
