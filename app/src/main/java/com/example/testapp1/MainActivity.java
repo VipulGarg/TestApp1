@@ -3,6 +3,7 @@ package com.example.testapp1;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -77,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
         // primary sections of the activity.
         if (mSectionsPagerAdapter == null)
         {
-            mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+            mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), this);
         }
 
         // Set up the ViewPager with the sections adapter.
@@ -385,32 +386,21 @@ public class MainActivity extends AppCompatActivity {
 
         private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 1888;
 
-        private String mSelectedImagePath;
-        private Uri mSelectedImageUri = null;
+        private Bitmap mBitmap = null;
 
         private MainActivity mActivity;
         private ImageView mImageView;
 
-        public CameraPictureFragment() {
-        }
+        public CameraPictureFragment() { }
 
-        public void SetImageUri(Uri uri)
+        public Bitmap GetBitmap() { return mBitmap; }
+        public void SetBitmap(Bitmap bitmap) { mBitmap = bitmap; }
+
+        private void SetBitmapOnImageView(Bitmap bitmap)
         {
-            if (uri == null)
+            if (bitmap == null)
                 return;
-
-            try
-            {
-                mImageView.setImageDrawable(Drawable.createFromStream(mActivity.getContentResolver().openInputStream(uri), null));
-            }
-            catch(FileNotFoundException fe)
-            {
-                return;
-            }
-            catch(Exception e)
-            {
-                return;
-            }
+            mImageView.setImageBitmap(bitmap);
         }
 
 
@@ -429,7 +419,7 @@ public class MainActivity extends AppCompatActivity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             // retain this fragment
-            setRetainInstance(true);
+           setRetainInstance(true);
         }
 
         /**
@@ -459,13 +449,13 @@ public class MainActivity extends AppCompatActivity {
 
             ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
             mImageView = imageView;
-            if (mSelectedImageUri == null)
+            if (mBitmap == null)
             {
                 imageView.setImageResource(R.drawable.section_1);
             }
             else
             {
-                SetImageUri(mSelectedImageUri);
+                SetBitmapOnImageView(mBitmap);
             }
             imageView.setOnClickListener(new View.OnClickListener() {
 
@@ -534,7 +524,8 @@ public class MainActivity extends AppCompatActivity {
                     Bitmap bitmap = BitmapFactory.decodeByteArray(byteArray, 0,
                             byteArray.length);
 
-                    mImageView.setImageBitmap(bitmap);
+                    SetBitmapOnImageView(bitmap);
+                    mBitmap = bitmap;
 
                 }
             }
@@ -549,8 +540,15 @@ public class MainActivity extends AppCompatActivity {
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
-        public SectionsPagerAdapter(FragmentManager fm) {
+        private PlaceholderFragment p1;
+        private CameraPictureFragment p2;
+        private PlaceholderFragment p3;
+
+        private Context mContext;
+
+        public SectionsPagerAdapter(FragmentManager fm, Context context) {
             super(fm);
+            mContext = context;
         }
 
         @Override
@@ -565,15 +563,21 @@ public class MainActivity extends AppCompatActivity {
                     return PlaceholderFragment.newInstance(position + 1);
                 case 1:
                     return CameraPictureFragment.newInstance(position + 1);
-                default:
-                    return PlaceholderFragment.newInstance(position + 1);
+                default: // should never reach here
+                    return null;
             }
         }
 
         @Override
         public int getCount()
         {
-            // Show 3 total pages.
+            // If camera is turned off, show the one page to select images only.
+            PackageManager packageManager = mContext.getPackageManager();
+            if(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA) == false)
+            {
+                return 1;
+            }
+
             return 3;
         }
 
@@ -590,6 +594,29 @@ public class MainActivity extends AppCompatActivity {
                     return "SECTION 3";
             }
             return null;
+        }
+
+        // Here we can finally safely save a reference to the created
+        // Fragment, no matter where it came from (either getItem() or
+        // FragmentManger). Simply save the returned Fragment from
+        // super.instantiateItem() into an appropriate reference depending
+        // on the ViewPager position.
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            Fragment createdFragment = (Fragment) super.instantiateItem(container, position);
+            // save the appropriate reference depending on position
+            switch (position) {
+                case 0:
+                    p1 = (PlaceholderFragment) createdFragment;
+                    break;
+                case 1:
+                    p2 = (CameraPictureFragment) createdFragment;
+                    break;
+                case 2:
+                    p3 = (PlaceholderFragment) createdFragment;
+                    break;
+            }
+            return createdFragment;
         }
     }
 }
