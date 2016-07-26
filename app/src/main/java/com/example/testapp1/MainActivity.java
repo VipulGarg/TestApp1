@@ -187,6 +187,7 @@ public class MainActivity extends AppCompatActivity {
 
         private MainActivity mActivity;
         private ImageView mImageView;
+        private Button mBtn;
 
         public PlaceholderFragment() {
         }
@@ -249,6 +250,10 @@ public class MainActivity extends AppCompatActivity {
 
             Button btn = (Button) rootView.findViewById(R.id.section_button);
             btn.setText("Load a Picture");
+            mBtn = btn;
+            if (mSelectedImageUri != null)
+                btn.setVisibility(View.INVISIBLE);
+
             btn.setOnClickListener(new View.OnClickListener() {
 
                 @Override
@@ -329,6 +334,7 @@ public class MainActivity extends AppCompatActivity {
 
                     mSelectedImagePath = mActivity.getPath(selectedImageUri);
                     mSelectedImagePath = mActivity.getRealPathFromURI(getContext(), selectedImageUri);
+                    mBtn.setVisibility(View.INVISIBLE);
                 }
             }
         }
@@ -352,6 +358,7 @@ public class MainActivity extends AppCompatActivity {
 
         private MainActivity mActivity;
         private ImageView mImageView;
+        private Button mBtn;
 
         public CameraPictureFragment() { }
 
@@ -404,6 +411,10 @@ public class MainActivity extends AppCompatActivity {
 
             Button btn = (Button) rootView.findViewById(R.id.section_button);
             btn.setText("Take a Picture");
+            mBtn = btn;
+            if (mBitmap != null)
+                btn.setVisibility(View.INVISIBLE);
+
             btn.setOnClickListener(new View.OnClickListener() {
 
                 @Override
@@ -458,7 +469,7 @@ public class MainActivity extends AppCompatActivity {
 
                     SetBitmapOnImageView(bitmap);
                     mBitmap = bitmap;
-
+                    mBtn.setVisibility(View.INVISIBLE);
                 }
             }
         }
