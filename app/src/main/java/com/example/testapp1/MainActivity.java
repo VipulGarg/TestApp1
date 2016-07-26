@@ -305,40 +305,60 @@ public class MainActivity extends AppCompatActivity {
             ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
             mImageView = imageView;
 
+            FileOutputStream out = null;
             try{
-                InputStream is = getContext().getResources().openRawResource(R.raw.leofacedet);
-                File cascadeDir = getContext().getDir("cascade", Context.MODE_PRIVATE);
-                File mCascadeFile = new File(cascadeDir, "leofacedet.xml");
-                FileOutputStream os = new FileOutputStream(mCascadeFile);
+//                InputStream is = getContext().getResources().openRawResource(R.raw.leofacedet);
+//                File cascadeDir = getContext().getDir("cascade", Context.MODE_PRIVATE);
+//                File mCascadeFile = new File(cascadeDir, "leofacedet.xml");
+//                FileOutputStream os = new FileOutputStream(mCascadeFile);
+//
+//                byte[] buffer = new byte[4096];
+//                int bytesRead;
+//                while ((bytesRead = is.read(buffer)) != -1) {
+//                    os.write(buffer, 0, bytesRead);
+//                }
+//                is.close();
+//                os.close();
+//                CascadeClassifier mCascadeER = new CascadeClassifier(mCascadeFile.getAbsolutePath());
+//                if (mCascadeER.empty()){
+//                    String sourceImgName = "faces1.png";
+//                    String resultImgName = "result_image.png";
+//                }
 
-                byte[] buffer = new byte[4096];
-                int bytesRead;
-                while ((bytesRead = is.read(buffer)) != -1) {
-                    os.write(buffer, 0, bytesRead);
-                }
-                is.close();
-                os.close();
-                CascadeClassifier mCascadeER = new CascadeClassifier(mCascadeFile.getAbsolutePath());
-                if (mCascadeER.empty()){
-                    String sourceImgName = "faces1.png";
-                    String resultImgName = "result_image.png";
-                }
+//                FaceDetector faceDetector = new FaceDetector();
+//                String sourceImgName = "faces1.png";
+//                String resultImgName = "result_image.png";
+//
+//                Mat resultImage = faceDetector.DetecteFace(sourceImgName, mCascadeER);
 
-                FaceDetector faceDetector = new FaceDetector();
-                String sourceImgName = "faces1.png";
-                String resultImgName = "result_image.png";
+                // make a blank Mat image
+                Mat blank = new Mat(800, 600, CvType.CV_8UC3, new Scalar(128,128,128));
+                DrawThoughtBubble(blank, new Point(10,10), new Point(200,200), new Point(200,300),
+                        "//oneweek is awesome!");
 
-                Mat resultImage = faceDetector.DetecteFace(sourceImgName, mCascadeER);
-
-                Imgproc.cvtColor(resultImage, resultImage, Imgproc.COLOR_GRAY2RGBA, 4);
-                Bitmap bmp = Bitmap.createBitmap(resultImage.cols(), resultImage.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(resultImage, bmp);
+                //convert image to bitmap and display
+                //Imgproc.cvtColor(resultImage, resultImage, Imgproc.COLOR_GRAY2RGBA, 4);
+                Bitmap bmp = Bitmap.createBitmap(blank.cols(), blank.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(blank, bmp);
                 imageView.setImageBitmap(bmp);
 
-                faceDetector.SaveImage(resultImgName, resultImage);
+//                faceDetector.SaveImage(resultImgName, resultImage);
+
+                File file = new File(mActivity.getFilesDir() + "testoutput.png");
+                out = new FileOutputStream(file);
+                bmp.compress(Bitmap.CompressFormat.PNG, 100, out); // bmp is your Bitmap instance
+                // PNG is a lossless format, the compression factor (100) is ignored
             }
             catch (Exception e) {
-
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (out != null) {
+                        out.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
             if (mSelectedImageUri == null)
