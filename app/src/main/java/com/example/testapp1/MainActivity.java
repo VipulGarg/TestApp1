@@ -3,6 +3,7 @@ package com.example.testapp1;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -32,6 +33,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.ImageView;
 
@@ -94,8 +98,10 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
-        if (mSectionsPagerAdapter == null) {
-            mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        if (mSectionsPagerAdapter == null)
+        {
+            mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), this);
         }
 
         // Set up the ViewPager with the sections adapter.
@@ -188,65 +194,80 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.section_image);
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.connect();
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "Main Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app URL is correct.
-                Uri.parse("android-app://com.example.testapp1/http/host/path")
-        );
-        AppIndex.AppIndexApi.start(client, viewAction);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "Main Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app URL is correct.
-                Uri.parse("android-app://com.example.testapp1/http/host/path")
-        );
-        AppIndex.AppIndexApi.end(client, viewAction);
-        client.disconnect();
-    }
 
     /**
-     * A placeholder fragment containing a simple view.
+     * Base Class for Image Fragments
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class BaseImageFragment extends Fragment {
         /**
          * The fragment argument representing the section number for this
          * fragment.
          */
-        private static final String ARG_SECTION_NUMBER = "section_number";
+        protected static final String ARG_SECTION_NUMBER = "section_number";
+
+        protected MainActivity mActivity;
+        protected ImageView mImageView;
+        protected Button mBtn;
+        protected LinearLayout mLinearLayout;
+
+        public BaseImageFragment() {
+        }
+
+        protected void CleanLayout()
+        {
+            mBtn.setVisibility(View.INVISIBLE);
+            mLinearLayout.setBackgroundResource(0);
+        }
+
+
+        @Override
+        public void onAttach(Activity activity)
+        {
+            if (activity instanceof MainActivity)
+            {
+                mActivity = (MainActivity) activity;
+            }
+            super.onAttach(activity);
+        }
+
+        // this method is only called once for this fragment
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            // retain this fragment
+            setRetainInstance(true);
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+
+            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+            LinearLayout linearLayout = (LinearLayout) rootView.findViewById(R.id.section_ll);
+            mLinearLayout = linearLayout;
+            Button btn = (Button) rootView.findViewById(R.id.section_button);
+            btn.setText("Load a Picture");
+            mBtn = btn;
+
+            ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
+            mImageView = imageView;
+
+            return rootView;
+        }
+    }
+
+    /**
+     * Fragment for loading a picture
+     */
+    public static class LoadImageFragment extends BaseImageFragment {
 
         private static final int SELECT_PICTURE = 1;
 
         private String mSelectedImagePath;
         private Uri mSelectedImageUri = null;
 
-        private MainActivity mActivity;
-        private ImageView mImageView;
-
-        public PlaceholderFragment() {
+        public LoadImageFragment() {
         }
 
         public void SetImageUri(Uri uri) {
@@ -263,28 +284,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        @Override
-        public void onAttach(Activity activity) {
-            if (activity instanceof MainActivity) {
-                mActivity = (MainActivity) activity;
-            }
-            super.onAttach(activity);
-        }
-
-        // this method is only called once for this fragment
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            // retain this fragment
-            setRetainInstance(true);
-        }
-
         /**
          * Returns a new instance of this fragment for the given section
          * number.
          */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
+        public static LoadImageFragment newInstance(int sectionNumber) {
+            LoadImageFragment fragment = new LoadImageFragment();
             Bundle args = new Bundle();
             args.putInt(ARG_SECTION_NUMBER, sectionNumber);
             fragment.setArguments(args);
@@ -295,68 +300,39 @@ public class MainActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
 
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            View rootView = super.onCreateView(inflater, container, savedInstanceState);
+
+            if (mSelectedImageUri != null)
+            {
+                CleanLayout();
+            }
+
+            mBtn.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent();
+                    intent.setType("image/*");
+                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                    startActivityForResult(Intent.createChooser(intent,
+                            "Select Picture"), SELECT_PICTURE);
+                }
+
+            });
 
             final Builder alt_bld = new Builder(getActivity());
             alt_bld.setMessage("apprika target achieve...");
             alt_bld.setCancelable(true);
 
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-
-            ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
-            mImageView = imageView;
-
-            if (mSelectedImageUri == null) {
-                imageView.setImageResource(R.drawable.section_1);
-            } else {
+            if (mSelectedImageUri == null)
+            {
+                mImageView.setImageResource(R.drawable.section_1);
+            }
+            else
+            {
                 SetImageUri(mSelectedImageUri);
             }
-            imageView.setOnClickListener(new View.OnClickListener() {
 
-                @Override
-                public void onClick(View view) {
-                    alt_bld.show();
-                }
-
-            });
-
-            //set the ontouch listener
-            imageView.setOnTouchListener(new View.OnTouchListener() {
-
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN: {
-                            ImageView view = (ImageView) v;
-                            //overlay is black with transparency of 0x77 (119)
-                            view.getDrawable().setColorFilter(0x77000000, PorterDuff.Mode.SRC_ATOP);
-                            view.invalidate();
-
-                            break;
-                        }
-                        case MotionEvent.ACTION_UP: {
-                            //alt_bld.show();
-                            Intent intent = new Intent();
-                            intent.setType("image/*");
-                            intent.setAction(Intent.ACTION_GET_CONTENT);
-                            startActivityForResult(Intent.createChooser(intent,
-                                    "Select Picture"), SELECT_PICTURE);
-                        }
-
-                        case MotionEvent.ACTION_CANCEL: {
-                            ImageView view = (ImageView) v;
-                            //clear the overlay
-                            view.getDrawable().clearColorFilter();
-                            view.invalidate();
-                            break;
-                        }
-                    }
-
-                    return true;
-                }
-            });
             return rootView;
         }
 
@@ -370,6 +346,7 @@ public class MainActivity extends AppCompatActivity {
 
                     mSelectedImagePath = mActivity.getPath(selectedImageUri);
                     mSelectedImagePath = mActivity.getRealPathFromURI(getContext(), selectedImageUri);
+                    CleanLayout();
                 }
             }
         }
@@ -380,60 +357,31 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Fragment with Camera View for Pictures
      */
-    public static class CameraPictureFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
+    public static class CameraImageFragment extends BaseImageFragment {
 
         private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 1888;
 
-        private String mSelectedImagePath;
-        private Uri mSelectedImageUri = null;
+        private Bitmap mBitmap = null;
 
-        private MainActivity mActivity;
-        private ImageView mImageView;
+        public CameraImageFragment() { }
 
-        public CameraPictureFragment() {
-        }
+        public Bitmap GetBitmap() { return mBitmap; }
+        public void SetBitmap(Bitmap bitmap) { mBitmap = bitmap; }
 
-        public void SetImageUri(Uri uri) {
-            if (uri == null)
+
+        private void SetBitmapOnImageView(Bitmap bitmap)
+        {
+            if (bitmap == null)
                 return;
-
-            try {
-                mImageView.setImageDrawable(Drawable.createFromStream(mActivity.getContentResolver().openInputStream(uri), null));
-            } catch (FileNotFoundException fe) {
-                return;
-            } catch (Exception e) {
-                return;
-            }
-        }
-
-
-        @Override
-        public void onAttach(Activity activity) {
-            if (activity instanceof MainActivity) {
-                mActivity = (MainActivity) activity;
-            }
-            super.onAttach(activity);
-        }
-
-        // this method is only called once for this fragment
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            // retain this fragment
-            setRetainInstance(true);
+            mImageView.setImageBitmap(bitmap);
         }
 
         /**
          * Returns a new instance of this fragment for the given section
          * number.
          */
-        public static CameraPictureFragment newInstance(int sectionNumber) {
-            CameraPictureFragment fragment = new CameraPictureFragment();
+        public static CameraImageFragment newInstance(int sectionNumber) {
+            CameraImageFragment fragment = new CameraImageFragment();
             Bundle args = new Bundle();
             args.putInt(ARG_SECTION_NUMBER, sectionNumber);
             fragment.setArguments(args);
@@ -444,63 +392,42 @@ public class MainActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
 
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            View rootView = super.onCreateView(inflater, container, savedInstanceState);
+
+            if (mBitmap != null)
+            {
+                CleanLayout();
+            }
+
+            mBtn.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(intent,
+                            CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+                }
+
+            });
 
             final Builder alt_bld = new Builder(getActivity());
             alt_bld.setMessage("apprika target achieve...");
             alt_bld.setCancelable(true);
 
+            /*
             TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
+            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));*/
 
-            ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
-            mImageView = imageView;
-            if (mSelectedImageUri == null) {
-                imageView.setImageResource(R.drawable.section_1);
-            } else {
-                SetImageUri(mSelectedImageUri);
+
+            if (mBitmap == null)
+            {
+                mImageView.setImageResource(R.drawable.section_1);
             }
-            imageView.setOnClickListener(new View.OnClickListener() {
+            else
+            {
+                SetBitmapOnImageView(mBitmap);
+            }
 
-                @Override
-                public void onClick(View view) {
-                    alt_bld.show();
-                }
-
-            });
-
-            //set the ontouch listener
-            imageView.setOnTouchListener(new View.OnTouchListener() {
-
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN: {
-                            ImageView view = (ImageView) v;
-                            //overlay is black with transparency of 0x77 (119)
-                            view.getDrawable().setColorFilter(0x77000000, PorterDuff.Mode.SRC_ATOP);
-                            view.invalidate();
-                            break;
-                        }
-                        case MotionEvent.ACTION_UP: {
-                            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                            startActivityForResult(intent,
-                                    CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
-                        }
-
-                        case MotionEvent.ACTION_CANCEL: {
-                            ImageView view = (ImageView) v;
-                            //clear the overlay
-                            view.getDrawable().clearColorFilter();
-                            view.invalidate();
-                            break;
-                        }
-                    }
-
-                    return true;
-                }
-            });
             return rootView;
         }
 
@@ -517,11 +444,16 @@ public class MainActivity extends AppCompatActivity {
 
                     // convert byte array to Bitmap
 
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(byteArray, 0,
+                    Bitmap inputPic= BitmapFactory.decodeByteArray(byteArray, 0,
                             byteArray.length);
 
-                    mImageView.setImageBitmap(bitmap);
+                    FaceDetector faceDetector = new FaceDetector();
+                    Bitmap outputPic = faceDetector.DetecteFace(inputPic, getContext());
 
+                    SetBitmapOnImageView(outputPic);
+
+                    mBitmap = inputPic;
+                    CleanLayout();
                 }
             }
         }
@@ -535,8 +467,15 @@ public class MainActivity extends AppCompatActivity {
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
-        public SectionsPagerAdapter(FragmentManager fm) {
+        private LoadImageFragment p1;
+        private CameraImageFragment p2;
+        private LoadImageFragment p3;
+
+        private Context mContext;
+
+        public SectionsPagerAdapter(FragmentManager fm, Context context) {
             super(fm);
+            mContext = context;
         }
 
         @Override
@@ -546,17 +485,25 @@ public class MainActivity extends AppCompatActivity {
             switch (position) {
                 case 0:
                 case 2:
-                    return PlaceholderFragment.newInstance(position + 1);
+                    return LoadImageFragment.newInstance(position + 1);
                 case 1:
-                    return CameraPictureFragment.newInstance(position + 1);
-                default:
-                    return PlaceholderFragment.newInstance(position + 1);
+                    return CameraImageFragment.newInstance(position + 1);
+                default: // should never reach here
+                    return null;
             }
         }
 
         @Override
-        public int getCount() {
-            // Show 3 total pages.
+
+        public int getCount()
+        {
+            // If camera is turned off, show the one page to select images only.
+            PackageManager packageManager = mContext.getPackageManager();
+            if(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA) == false)
+            {
+                return 1;
+            }
+
             return 3;
         }
 
@@ -571,6 +518,29 @@ public class MainActivity extends AppCompatActivity {
                     return "SECTION 3";
             }
             return null;
+        }
+
+        // Here we can finally safely save a reference to the created
+        // Fragment, no matter where it came from (either getItem() or
+        // FragmentManger). Simply save the returned Fragment from
+        // super.instantiateItem() into an appropriate reference depending
+        // on the ViewPager position.
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            Fragment createdFragment = (Fragment) super.instantiateItem(container, position);
+            // save the appropriate reference depending on position
+            switch (position) {
+                case 0:
+                    p1 = (LoadImageFragment) createdFragment;
+                    break;
+                case 1:
+                    p2 = (CameraImageFragment) createdFragment;
+                    break;
+                case 2:
+                    p3 = (LoadImageFragment) createdFragment;
+                    break;
+            }
+            return createdFragment;
         }
     }
 }
