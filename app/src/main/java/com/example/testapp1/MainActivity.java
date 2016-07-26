@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.design.widget.TabLayout;
@@ -33,6 +34,8 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import org.opencv.core.Mat;
 
+import java.io.FileNotFoundException;
+
 public class MainActivity extends AppCompatActivity {
 
     /**
@@ -52,6 +55,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // load opencv library
+        System.loadLibrary("opencv_java3");
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -143,6 +149,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void SetImage()
+    {
+        findViewById(R.id.section_image);
+    }
+
     /**
      * A placeholder fragment containing a simple view.
      */
@@ -155,11 +166,32 @@ public class MainActivity extends AppCompatActivity {
 
         private static final int SELECT_PICTURE = 1;
 
-        private String selectedImagePath;
+        private String mSelectedImagePath;
+        private Uri mSelectedImageUri;
 
         private MainActivity mActivity;
+        private ImageView mImageView;
 
         public PlaceholderFragment() {
+        }
+
+        public void SetImageUri(Uri uri)
+        {
+            if (uri == null)
+                return;
+            
+            try
+            {
+                mImageView.setImageDrawable(Drawable.createFromStream(mActivity.getContentResolver().openInputStream(uri), null));
+            }
+            catch(FileNotFoundException fe)
+            {
+                return;
+            }
+            catch(Exception e)
+            {
+                return;
+            }
         }
 
 
@@ -201,6 +233,7 @@ public class MainActivity extends AppCompatActivity {
             textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
 
             ImageView imageView = (ImageView) rootView.findViewById(R.id.section_image);
+            mImageView = imageView;
             imageView.setOnClickListener(new View.OnClickListener() {
 
                 @Override
@@ -268,8 +301,11 @@ public class MainActivity extends AppCompatActivity {
                 if (requestCode == SELECT_PICTURE)
                 {
                     Uri selectedImageUri = data.getData();
-                    selectedImagePath = mActivity.getPath(selectedImageUri);
-                    selectedImagePath = mActivity.getRealPathFromURI(getContext(), selectedImageUri);
+                    mSelectedImageUri = selectedImageUri;
+                    SetImageUri(selectedImageUri);
+
+                    mSelectedImagePath = mActivity.getPath(selectedImageUri);
+                    mSelectedImagePath = mActivity.getRealPathFromURI(getContext(), selectedImageUri);
                 }
             }
         }
