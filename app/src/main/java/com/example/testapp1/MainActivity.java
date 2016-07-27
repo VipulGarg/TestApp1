@@ -218,12 +218,15 @@ public class MainActivity extends AppCompatActivity {
 
         protected void RunFaceDetectionAndUpdate(Bitmap inputPic)
         {
+            if (mFaces != null)
+                mFaces.clear();
+
             if (!mActivity.mDetector.isOperational()) {
                 //Handle contingency
             } else {
                 com.google.android.gms.vision.Frame frame = new Frame.Builder().setBitmap(inputPic).build();
                 mFaces = mActivity.mDetector.detect(frame);
-                mActivity.mDetector.release();
+                //mActivity.mDetector.release();
             }
             mImageView.invalidate();
 
