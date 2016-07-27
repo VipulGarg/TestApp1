@@ -126,6 +126,166 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public static enum Emotion
+    {
+        Anger, Contempt, Disgust, Fear, Happiness, Sadness, Surprise, Neutral, None
+    }
+
+    public static String[] Anger_Strings = {
+            "I may look calm, but in my head I've killed you 3 times",
+            "And this is my happy face",
+            "I wouldn't have to manage my anger if people would manage their stupidity",
+            "I will shit on everything you love",
+    };
+    public static String[] Contempt_Strings = {
+            "Who do these people think I am?!",
+            "Don't put your words in my mouth. I hate the taste of bullshit.",
+            "Offended you are. A shit I don't give.",
+            "I like the sound you make when you shut up"
+    };
+    public static String[] Disgust_Strings = {
+            "What is that smell?"
+    };
+    public static String[] Fear_Strings = {
+            "I don't think Barry liked my code",
+    };
+    public static String[] Happiness_Strings = {
+            "//oneweek is awesome!"
+    };
+    public static String[] Sadness_Strings = {
+            "They backed out my code..."
+    };
+    public static String[] Surprise_Strings = {
+            "What do you mean it went out in the fork?"
+    };
+    public static String[] Neutral_Strings = {
+            "Who looked at a bowl of rice and was like \"I bet the most efficient way of eating this is with two sticks\"",
+            "The problem with democracy is that appealing to the dumb half is as good a strategy as appealing to the smart half.",
+            "If thought bubbles appeared above my head, I'd be screwed.",
+            "If cats could talk, they wouldn't",
+    };
+
+    public static String[][] ThoughtStrings = {
+            Anger_Strings,
+            Contempt_Strings,
+            Disgust_Strings,
+            Fear_Strings,
+            Happiness_Strings,
+            Sadness_Strings,
+            Surprise_Strings,
+            Neutral_Strings};
+
+    public static String GetThought() { return GetThought(Emotion.None); }
+
+    public static String GetThought(Emotion emotion)
+    {
+        int length = ThoughtStrings[emotion.ordinal()].length;
+        if (length == 0)
+            return "";
+        int index = ThreadLocalRandom.current().nextInt(length);
+        return ThoughtStrings[emotion.ordinal()][index];
+    }
+
+    /* Draws thought bubble onto target Mat
+     * target is the Mat to be drawn on
+     * p1 and p2 define the size and location of the thought bubble. (opposite corners)
+     * targetPoint is are the coordinates the thought bubble points to
+     * text is the text to be written in the thought bubble
+     */
+    public static void DrawThoughtBubble(Mat target, Point p1, Point p2, Point targetPoint, String text)
+    {
+        Scalar bubbleColor = new Scalar(255,255,255);
+        Scalar textColor = new Scalar(0,0,0);
+        double textSize = 0.4;
+
+        int minPuffSize = 20;
+        int maxPuffSize = 50;
+        int overlap = 5; //pixels to overlap on each side of a puff
+
+        int chainStartSize = 5;
+        double chainSpacing = 1.5; //spacing of bubble chain relative to size of bubbles
+        double chainGrowRate = 0.2;
+
+        double top = Math.min(p1.y, p2.y);
+        double left = Math.min(p1.x, p2.x);
+        double width = Math.abs(p1.x - p2.x);
+        double height = Math.abs(p1.y - p2.y);
+
+        // draw rectangle
+        Imgproc.rectangle(target, p1, p2, bubbleColor, -1 /*negative thickness means filled*/);
+        // TODO draw bubble cloud border
+        double i;
+        // top
+        for (i=left; i<left+width; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > left+width)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(i+puffSize-overlap, top);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += (puffSize-overlap)*2;
+        }
+        // bottom
+        for (i=left; i<left+width; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > left+width)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(i+puffSize-overlap, top+height);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += (puffSize-overlap)*2;
+        }
+        // left //TODO left/right overlap factor
+        for (i=top; i<top+height; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > top+height)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(left, i+puffSize-overlap);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += (puffSize-overlap)*2;
+        }
+        // right
+        for (i=top; i<top+height; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > top+height)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(left+width, i+puffSize-overlap);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += (puffSize-overlap)*2;
+        }
+
+        // draw bubble chain to target (from target point to thought bubble)
+        Point end = new Point(left + width/2, top + height/2);
+        double length = Math.sqrt(Math.pow(end.x - targetPoint.x, 2) + Math.pow(end.y - targetPoint.y, 2));
+        // length 1 vector pointing in direction of thought bubble
+        Point unitVector = new Point((end.x-targetPoint.x)/length, (end.y-targetPoint.y)/length);
+
+        Point cur = targetPoint;
+        int size = chainStartSize;
+        double distance = 0;
+        while (cur.x<left || cur.y<top || cur.x>(left+width) || cur.y>(top+height) && distance<length)
+        {
+            //draw
+            cur.x = cur.x + unitVector.x*size;
+            cur.y = cur.y + unitVector.y*size;
+            Imgproc.circle(target, cur, size, bubbleColor, -1 /*negative thickness -> filled*/);
+            //move cur
+            cur.x += unitVector.x*size*chainSpacing;
+            cur.y += unitVector.y*size*chainSpacing;
+            distance += size + size*chainSpacing;
+            //update size
+            size = (int) Math.min(size + size*2.*chainGrowRate, maxPuffSize);
+        }
+
+        // draw bubble text
+        // TODO code up some word wrap?
+        Size textBoxSize = Imgproc.getTextSize(text, Core.FONT_HERSHEY_SIMPLEX, textSize, 1 /* thickness */, null);
+        Imgproc.putText(target, text, new Point(left, top+textBoxSize.height),
+                Core.FONT_HERSHEY_SIMPLEX, textSize, textColor);
+    }
+
     /**
      * helper to retrieve the path of an image URI
      */
