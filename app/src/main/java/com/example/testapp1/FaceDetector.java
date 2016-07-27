@@ -16,6 +16,7 @@ import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs; // imread, imwrite, etc
 import org.opencv.videoio.*;   // VideoCapture
 import org.opencv.objdetect.CascadeClassifier;
@@ -24,6 +25,7 @@ import org.opencv.imgproc.Imgproc;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class FaceDetector {
 
@@ -64,7 +66,7 @@ public class FaceDetector {
     public Rect LocateTextBox(Rect inputRect, int width, int height, int imageWidth){
         Rect newRect = new Rect();
         newRect.width = width;
-        newRect.height = height;
+        newRect.height = height / 2;
 
         // top left
         if (inputRect.x - width >= 0 && inputRect.y - height >=0){
@@ -101,6 +103,21 @@ public class FaceDetector {
         return newRect;
     }
 
+    public Rect FindLargest(Rect[] rects){
+        int largest = 0;
+        double area = 0;
+        for (int index = 0; index < rects.length; index++){
+            Rect rect = rects[index];
+            double areaNew = rect.width * rect.height;
+            if (areaNew > area){
+                area = areaNew;
+                largest = index;
+            }
+        }
+
+        return rects[largest];
+    }
+
     public Bitmap DetecteFace(Bitmap inputPic, Context context){
 
         try {
@@ -122,10 +139,7 @@ public class FaceDetector {
                 String resultImgName = "result_image.png";
             }
 
-            //FaceDetector faceDetector = new FaceDetector();
-
-//            Bitmap bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.faces1);
-            Mat image = new Mat (inputPic.getWidth(), inputPic.getHeight(), CvType.CV_8UC1);
+            Mat image = new Mat (inputPic.getWidth(), inputPic.getHeight(), CvType.CV_8UC3);
             Utils.bitmapToMat(inputPic, image);
 
             Boolean isEmpty = image.empty();
@@ -136,18 +150,31 @@ public class FaceDetector {
             // drawing a rectangle on the face
             // TODO: we need to draw bubble and text instead
             Rect[] rects = faceDetections.toArray();
-            for (Rect rect : faceDetections.toArray()) {
-                Imgproc.rectangle(image, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
-                        new Scalar(0, 0, 255));
 
-                Rect newRect = LocateTextBox(rect, rect.width, rect.height, inputPic.getWidth());
-                if (newRect.x != -1 && newRect.y != -1){
-                    Imgproc.rectangle(image, new Point(newRect.x, newRect.y), new Point(newRect.x + newRect.width, newRect.y + newRect.height),
-                            new Scalar(0, 255, 0));
-                }
-//                Imgproc.rectangle(image, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
+            Rect largestRect = FindLargest(rects);
+
+//            Imgproc.rectangle(image, new Point(largestRect.x, largestRect.y), new Point(largestRect.x + largestRect.width, largestRect.y + largestRect.height),
+//                    new Scalar(255, 0, 0));
+
+            Rect newRect = LocateTextBox(largestRect, largestRect.width, largestRect.height, inputPic.getWidth());
+            if (newRect.x != -1 && newRect.y != -1){
+                Point topLeft = new Point(newRect.x, newRect.y);
+                Point bottomRight = new Point(newRect.x + newRect.width, newRect.y + newRect.height);
+                Point face = new Point(largestRect.x, largestRect.y);
+                DrawThoughtBubble(image, topLeft, bottomRight, face, "I'm Awesome");
+//                Imgproc.rectangle(image, new Point(newRect.x, newRect.y), new Point(newRect.x + newRect.width, newRect.y + newRect.height),
 //                        new Scalar(0, 255, 0));
             }
+//            for (Rect rect : faceDetections.toArray()) {
+//                Imgproc.rectangle(image, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
+//                        new Scalar(255, 0, 0));
+//
+//                Rect newRect = LocateTextBox(rect, rect.width, rect.height, inputPic.getWidth());
+//                if (newRect.x != -1 && newRect.y != -1){
+//                    Imgproc.rectangle(image, new Point(newRect.x, newRect.y), new Point(newRect.x + newRect.width, newRect.y + newRect.height),
+//                            new Scalar(0, 255, 0));
+//                }
+//            }
 
             Bitmap.Config conf = Bitmap.Config.ARGB_8888; // see other conf types
             Bitmap outputPic = Bitmap.createBitmap(inputPic.getWidth(), inputPic.getHeight(), conf);
@@ -155,7 +182,6 @@ public class FaceDetector {
             Utils.matToBitmap(image, outputPic);
 
             return outputPic;
-            // view.setImageBitmap(bmp);
         } catch (Exception e) {
             // do nothing
             Bitmap.Config conf = Bitmap.Config.ARGB_8888; // see other conf types
@@ -163,6 +189,107 @@ public class FaceDetector {
             return outputPic;
         }
     }
+
+    /* Draws thought bubble onto target Mat
+  * target is the Mat to be drawn on
+  * p1 and p2 define the size and location of the thought bubble. (opposite corners)
+  * targetPoint is are the coordinates the thought bubble points to
+  * text is the text to be written in the thought bubble
+  */
+    public static void DrawThoughtBubble(Mat target, Point p1, Point p2, Point targetPoint, String text)
+    {
+        Scalar bubbleColor = new Scalar(255,255,153, 255);
+        Scalar textColor = new Scalar(32,32,32, 255);
+        double textSize = 0.3;
+
+        int minPuffSize = 10;
+        int maxPuffSize = 20;
+        int overlap = 5; //pixels to overlap on each side of a puff
+
+        int chainStartSize = 5;
+        double chainSpacing = 1.5; //spacing of bubble chain relative to size of bubbles
+        double chainGrowRate = 0.2;
+
+        double top = Math.min(p1.y, p2.y);
+        double left = Math.min(p1.x, p2.x);
+        double width = Math.abs(p1.x - p2.x);
+        double height = Math.abs(p1.y - p2.y);
+
+        // draw rectangle
+        Imgproc.rectangle(target, p1, p2, bubbleColor, -1 /*negative thickness means filled*/);
+        // TODO draw bubble cloud border
+        double i;
+        // top
+        for (i=left; i<left+width; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > left+width)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(i+puffSize-overlap, top);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += (puffSize-overlap)*2;
+        }
+        // bottom
+        for (i=left; i<left+width; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > left+width)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(i+puffSize-overlap, top+height);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += (puffSize-overlap)*2;
+        }
+        // left //TODO left/right overlap factor
+        for (i=top; i<top+height; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > top+height)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(left, i+puffSize-overlap);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += (puffSize-overlap)*2;
+        }
+        // right
+        for (i=top; i<top+height; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > top+height)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(left+width, i+puffSize-overlap);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += (puffSize-overlap)*2;
+        }
+
+        // draw bubble chain to target (from target point to thought bubble)
+        Point end = new Point(left + width/2, top + height/2);
+        double length = Math.sqrt(Math.pow(end.x - targetPoint.x, 2) + Math.pow(end.y - targetPoint.y, 2));
+        // length 1 vector pointing in direction of thought bubble
+        Point unitVector = new Point((end.x-targetPoint.x)/length, (end.y-targetPoint.y)/length);
+
+        Point cur = targetPoint;
+        int size = chainStartSize;
+        double distance = 0;
+        while (cur.x<left || cur.y<top || cur.x>(left+width) || cur.y>(top+height) && distance<length)
+        {
+            //draw
+            cur.x = cur.x + unitVector.x*size;
+            cur.y = cur.y + unitVector.y*size;
+            Imgproc.circle(target, cur, size, bubbleColor, -1 /*negative thickness -> filled*/);
+            //move cur
+            cur.x += unitVector.x*size*chainSpacing;
+            cur.y += unitVector.y*size*chainSpacing;
+            distance += size + size*chainSpacing;
+            //update size
+            size = (int) Math.min(size + size*2.*chainGrowRate, maxPuffSize);
+        }
+
+        // draw bubble text
+        // TODO code up some word wrap?
+        Size textBoxSize = Imgproc.getTextSize(text, Core.FONT_HERSHEY_SIMPLEX, textSize, 1 /* thickness */, null);
+        Imgproc.putText(target, text, new Point(left, top+textBoxSize.height),
+                Core.FONT_HERSHEY_SIMPLEX, textSize, textColor);
+    }
+
 
     public static void main(){
 
