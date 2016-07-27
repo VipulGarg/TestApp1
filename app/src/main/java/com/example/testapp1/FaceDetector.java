@@ -238,15 +238,16 @@ public class FaceDetector {
   */
     public static void DrawThoughtBubble(Mat target, Point p1, Point p2, Point targetPoint, String text)
     {
+        int scaleFactor = target.width() / 250;
         Scalar bubbleColor = new Scalar(255,255,153, 255);
         Scalar textColor = new Scalar(32,32,32, 255);
-        double textSize = 0.3;
+        double textSize = 0.3 * scaleFactor;
 
-        int minPuffSize = 10;
-        int maxPuffSize = 20;
-        int overlap = 5; //pixels to overlap on each side of a puff
+        int minPuffSize = 10 * scaleFactor;
+        int maxPuffSize = 20 * scaleFactor;
+        int overlap = 5 * scaleFactor; //pixels to overlap on each side of a puff
 
-        int chainStartSize = 5;
+        int chainStartSize = 5 * scaleFactor;
         double chainSpacing = 1.5; //spacing of bubble chain relative to size of bubbles
         double chainGrowRate = 0.2;
 
@@ -325,7 +326,7 @@ public class FaceDetector {
 
         // draw bubble text
         // TODO code up some word wrap?
-        Size textBoxSize = Imgproc.getTextSize(text, Core.FONT_HERSHEY_SIMPLEX, textSize, 1 /* thickness */, null);
+        Size textBoxSize = Imgproc.getTextSize(text, Core.FONT_HERSHEY_SIMPLEX, textSize, scaleFactor /* thickness */, null);
         Imgproc.putText(target, text, new Point(left, top+textBoxSize.height),
                 Core.FONT_HERSHEY_SIMPLEX, textSize, textColor);
     }
