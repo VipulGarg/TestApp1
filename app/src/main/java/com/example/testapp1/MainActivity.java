@@ -539,16 +539,16 @@ public class MainActivity extends AppCompatActivity {
                 return 1;
             }
 
-            return 3;
+            return 2;
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return "SECTION 1";
+                    return "Browse";
                 case 1:
-                    return "SECTION 2";
+                    return "Capture";
                 case 2:
                     return "SECTION 3";
             }
