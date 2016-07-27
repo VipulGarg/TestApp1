@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static enum Emotion
     {
-        Anger, Contempt, Disgust, Fear, Happiness, Sadness, Surprise, Neutral, None
+        Anger, Contempt, Disgust, Fear, Happiness, Sadness, Surprise, Neutral
     }
 
     public static String[] Anger_Strings = {
@@ -177,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
             Surprise_Strings,
             Neutral_Strings};
 
-    public static String GetThought() { return GetThought(Emotion.None); }
+    public static String GetThought() { return GetThought(Emotion.Neutral); }
 
     public static String GetThought(Emotion emotion)
     {
