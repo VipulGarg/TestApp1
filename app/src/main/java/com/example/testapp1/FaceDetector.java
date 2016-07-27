@@ -60,6 +60,24 @@ public class FaceDetector {
         && !rect1.contains(new Point(rect2.x + rect2.width, rect2.y + rect2.height))); // bottom right
     }
 
+    public static String[] sadStrings = {
+        "U r already dead!!",
+                "My happy face",
+                "Manage ur Stupidity",
+                "Shit on U",
+            "Who do u think I am?!",
+            "I Hate bullshit.",
+            "I like when you shut up",
+            "R u smelling",
+            "Barry waited on me"
+    };
+
+    public static String[] Happiness_Strings = {
+            "//oneweek is awesome!",
+            "Fork went out",
+            "RI happened",
+            "0 bugs"
+    };
     // we want to put a text box (width * height) outside the inputRect in the following positions
     // depends on where it fits
     //           \      |      /
@@ -180,9 +198,20 @@ public class FaceDetector {
     {
         FaceInformation fi = FindBestRect(rects, probArray);
         Rect bestRect = fi.rect;
+
         String toShow = "Shit On You!!!";
         if (fi.Happy)
-            toShow = "Candy on You!!!";
+        {
+            int length = Happiness_Strings.length;
+            int index = ThreadLocalRandom.current().nextInt(length);
+            toShow = Happiness_Strings[index];
+        }
+        else
+        {
+            int length = sadStrings.length;
+            int index = ThreadLocalRandom.current().nextInt(length);
+            toShow = sadStrings[index];
+        }
 
 //            Imgproc.rectangle(image, new Point(largestRect.x, largestRect.y), new Point(largestRect.x + largestRect.width, largestRect.y + largestRect.height),
 //                    new Scalar(255, 0, 0));
