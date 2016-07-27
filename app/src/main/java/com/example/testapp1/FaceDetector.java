@@ -314,6 +314,9 @@ public class FaceDetector {
     public static void DrawThoughtBubble(Mat target, Point p1, Point p2, Point targetPoint, String text)
     {
         int scaleFactor = target.width() / 250;
+        if (scaleFactor == 0)
+            scaleFactor = 1;
+
         Scalar bubbleColor = new Scalar(255,255,153, 255);
         Scalar textColor = new Scalar(32,32,32, 255);
         double textSize = 0.3 * scaleFactor;
