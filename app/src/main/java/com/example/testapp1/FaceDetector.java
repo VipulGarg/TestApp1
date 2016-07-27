@@ -125,10 +125,20 @@ public class FaceDetector {
     {
         Rect largestRect = FindLargest(rects);
 
-//            Imgproc.rectangle(image, new Point(largestRect.x, largestRect.y), new Point(largestRect.x + largestRect.width, largestRect.y + largestRect.height),
-//                    new Scalar(255, 0, 0));
+        int picWidth = inputPic.getWidth();
+        int picHeight = inputPic.getHeight();
 
-        Rect newRect = LocateTextBox(largestRect, largestRect.width, largestRect.height, inputPic.getWidth());
+        int bubbleWidth, bubbleHeight;
+        if (picWidth > picHeight){
+            bubbleWidth = picWidth / 3;
+            bubbleHeight = picHeight / 4;
+        }
+        else{
+            bubbleWidth = picHeight / 4;
+            bubbleHeight = picWidth / 3;
+        }
+
+        Rect newRect = LocateTextBox(largestRect, bubbleWidth, bubbleHeight, inputPic.getWidth());
         if (newRect.x != -1 && newRect.y != -1){
             Point topLeft = new Point(newRect.x, newRect.y);
             Point bottomRight = new Point(newRect.x + newRect.width, newRect.y + newRect.height);
@@ -165,6 +175,11 @@ public class FaceDetector {
             if (mFaces.size() != 0)
             {
                 Rect[] rects = new Rect[mFaces.size()];
+
+                if (rects.length == 0){
+                    return inputPic;
+                }
+
                 for (int i = 0; i < mFaces.size(); ++i)
                 {
                     int key = mFaces.keyAt(i);
