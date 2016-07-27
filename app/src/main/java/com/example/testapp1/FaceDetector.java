@@ -293,7 +293,7 @@ public class FaceDetector {
         int maxPuffSize = 20 * scaleFactor;
         int overlap = 5 * scaleFactor; //pixels to overlap on each side of a puff
 
-        int chainStartSize = 5 * scaleFactor;
+        int chainStartSize = 5;
         double chainSpacing = 1.5; //spacing of bubble chain relative to size of bubbles
         double chainGrowRate = 0.2;
 
@@ -374,7 +374,7 @@ public class FaceDetector {
         // TODO code up some word wrap?
         Size textBoxSize = Imgproc.getTextSize(text, Core.FONT_HERSHEY_SIMPLEX, textSize, scaleFactor /* thickness */, null);
         Imgproc.putText(target, text, new Point(left, top+textBoxSize.height),
-                Core.FONT_HERSHEY_SIMPLEX, textSize, textColor);
+                Core.FONT_HERSHEY_SIMPLEX, textSize, textColor, scaleFactor /* thickness */);
     }
 
 
