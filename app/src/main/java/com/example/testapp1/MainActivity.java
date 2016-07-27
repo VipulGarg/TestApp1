@@ -88,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
                     .setTrackingEnabled(false)
                     .setLandmarkType(com.google.android.gms.vision.face.FaceDetector.ALL_LANDMARKS)
                     .setMode(com.google.android.gms.vision.face.FaceDetector.FAST_MODE)
+                    .setClassificationType(com.google.android.gms.vision.face.FaceDetector.ALL_CLASSIFICATIONS)
                     .build();
             mDetector = detector;
         }
