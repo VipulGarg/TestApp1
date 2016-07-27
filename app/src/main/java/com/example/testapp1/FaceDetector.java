@@ -7,6 +7,9 @@ package com.example.testapp1;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.SparseArray;
+
+import com.google.android.gms.vision.face.Face;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -118,9 +121,63 @@ public class FaceDetector {
         return rects[largest];
     }
 
-    public Bitmap DetecteFace(Bitmap inputPic, Context context){
+    public Bitmap ProcessRects(Rect[] rects, Mat image, Bitmap inputPic)
+    {
+        Rect largestRect = FindLargest(rects);
+
+//            Imgproc.rectangle(image, new Point(largestRect.x, largestRect.y), new Point(largestRect.x + largestRect.width, largestRect.y + largestRect.height),
+//                    new Scalar(255, 0, 0));
+
+        Rect newRect = LocateTextBox(largestRect, largestRect.width, largestRect.height, inputPic.getWidth());
+        if (newRect.x != -1 && newRect.y != -1){
+            Point topLeft = new Point(newRect.x, newRect.y);
+            Point bottomRight = new Point(newRect.x + newRect.width, newRect.y + newRect.height);
+            Point face = new Point(largestRect.x, largestRect.y);
+            DrawThoughtBubble(image, topLeft, bottomRight, face, "I'm Awesome");
+//                Imgproc.rectangle(image, new Point(newRect.x, newRect.y), new Point(newRect.x + newRect.width, newRect.y + newRect.height),
+//                        new Scalar(0, 255, 0));
+        }
+//            for (Rect rect : faceDetections.toArray()) {
+//                Imgproc.rectangle(image, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
+//                        new Scalar(255, 0, 0));
+//
+//                Rect newRect = LocateTextBox(rect, rect.width, rect.height, inputPic.getWidth());
+//                if (newRect.x != -1 && newRect.y != -1){
+//                    Imgproc.rectangle(image, new Point(newRect.x, newRect.y), new Point(newRect.x + newRect.width, newRect.y + newRect.height),
+//                            new Scalar(0, 255, 0));
+//                }
+//            }
+
+        Bitmap.Config conf = Bitmap.Config.ARGB_8888; // see other conf types
+        Bitmap outputPic = Bitmap.createBitmap(inputPic.getWidth(), inputPic.getHeight(), conf);
+
+        Utils.matToBitmap(image, outputPic);
+
+        return outputPic;
+    }
+
+    public Bitmap DetectFace(Bitmap inputPic, Context context, SparseArray<Face> mFaces){
 
         try {
+            Mat image = new Mat (inputPic.getWidth(), inputPic.getHeight(), CvType.CV_8UC3);
+            Utils.bitmapToMat(inputPic, image);
+
+            if (mFaces.size() != 0)
+            {
+                Rect[] rects = new Rect[mFaces.size()];
+                for (int i = 0; i < mFaces.size(); ++i)
+                {
+                    int key = mFaces.keyAt(i);
+                    rects[i] = new Rect();
+                    rects[i].height = (int) mFaces.get(key).getHeight();
+                    rects[i].width = (int) mFaces.get(key).getWidth();
+                    rects[i].x = (int) mFaces.get(key).getPosition().x;
+                    rects[i].y = (int) mFaces.get(key).getPosition().y;
+                }
+
+                return ProcessRects(rects, image, inputPic);
+            }
+
             InputStream is = context.getResources().openRawResource(R.raw.leofacedet);
             File cascadeDir = context.getDir("cascade", Context.MODE_PRIVATE);
             File mCascadeFile = new File(cascadeDir, "leofacedet.xml");
@@ -139,9 +196,6 @@ public class FaceDetector {
                 String resultImgName = "result_image.png";
             }
 
-            Mat image = new Mat (inputPic.getWidth(), inputPic.getHeight(), CvType.CV_8UC3);
-            Utils.bitmapToMat(inputPic, image);
-
             Boolean isEmpty = image.empty();
 
             MatOfRect faceDetections = new MatOfRect();
@@ -151,37 +205,8 @@ public class FaceDetector {
             // TODO: we need to draw bubble and text instead
             Rect[] rects = faceDetections.toArray();
 
-            Rect largestRect = FindLargest(rects);
+            return ProcessRects(rects, image, inputPic);
 
-//            Imgproc.rectangle(image, new Point(largestRect.x, largestRect.y), new Point(largestRect.x + largestRect.width, largestRect.y + largestRect.height),
-//                    new Scalar(255, 0, 0));
-
-            Rect newRect = LocateTextBox(largestRect, largestRect.width, largestRect.height, inputPic.getWidth());
-            if (newRect.x != -1 && newRect.y != -1){
-                Point topLeft = new Point(newRect.x, newRect.y);
-                Point bottomRight = new Point(newRect.x + newRect.width, newRect.y + newRect.height);
-                Point face = new Point(largestRect.x, largestRect.y);
-                DrawThoughtBubble(image, topLeft, bottomRight, face, "I'm Awesome");
-//                Imgproc.rectangle(image, new Point(newRect.x, newRect.y), new Point(newRect.x + newRect.width, newRect.y + newRect.height),
-//                        new Scalar(0, 255, 0));
-            }
-//            for (Rect rect : faceDetections.toArray()) {
-//                Imgproc.rectangle(image, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height),
-//                        new Scalar(255, 0, 0));
-//
-//                Rect newRect = LocateTextBox(rect, rect.width, rect.height, inputPic.getWidth());
-//                if (newRect.x != -1 && newRect.y != -1){
-//                    Imgproc.rectangle(image, new Point(newRect.x, newRect.y), new Point(newRect.x + newRect.width, newRect.y + newRect.height),
-//                            new Scalar(0, 255, 0));
-//                }
-//            }
-
-            Bitmap.Config conf = Bitmap.Config.ARGB_8888; // see other conf types
-            Bitmap outputPic = Bitmap.createBitmap(inputPic.getWidth(), inputPic.getHeight(), conf);
-
-            Utils.matToBitmap(image, outputPic);
-
-            return outputPic;
         } catch (Exception e) {
             // do nothing
             Bitmap.Config conf = Bitmap.Config.ARGB_8888; // see other conf types

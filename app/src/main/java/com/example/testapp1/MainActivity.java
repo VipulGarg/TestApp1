@@ -1,68 +1,41 @@
 package com.example.testapp1;
 
 import android.app.Activity;
+import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Environment;
+import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.view.PagerAdapter;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-
 import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
-import android.app.AlertDialog;
-import android.app.AlertDialog.Builder;
-
-import org.opencv.android.Utils;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfRect;
-import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
-import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.objdetect.CascadeClassifier;
+import com.google.android.gms.vision.Frame;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -80,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+
+    public com.google.android.gms.vision.face.FaceDetector mDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +80,16 @@ public class MainActivity extends AppCompatActivity {
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
+
+        if (mDetector == null)
+        {
+            com.google.android.gms.vision.face.FaceDetector detector = new com.google.android.gms.vision.face.FaceDetector.Builder(this)
+                    .setTrackingEnabled(false)
+                    .setLandmarkType(com.google.android.gms.vision.face.FaceDetector.ALL_LANDMARKS)
+                    .setMode(com.google.android.gms.vision.face.FaceDetector.FAST_MODE)
+                    .build();
+            mDetector = detector;
+        }
 
         /* FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -363,6 +348,7 @@ public class MainActivity extends AppCompatActivity {
         protected Bitmap mBitmap;
         protected FloatingActionButton mFabNew;
         protected FloatingActionButton mFabCancel;
+        protected SparseArray<com.google.android.gms.vision.face.Face> mFaces;
 
         public BaseImageFragment() {
         }
@@ -392,8 +378,20 @@ public class MainActivity extends AppCompatActivity {
 
         protected void RunFaceDetectionAndUpdate(Bitmap inputPic)
         {
+            if (mFaces != null)
+                mFaces.clear();
+
+            if (!mActivity.mDetector.isOperational()) {
+                //Handle contingency
+            } else {
+                com.google.android.gms.vision.Frame frame = new Frame.Builder().setBitmap(inputPic).build();
+                mFaces = mActivity.mDetector.detect(frame);
+                //mActivity.mDetector.release();
+            }
+            mImageView.invalidate();
+
             FaceDetector faceDetector = new FaceDetector();
-            Bitmap outputPic = faceDetector.DetecteFace(inputPic, getContext());
+            Bitmap outputPic = faceDetector.DetectFace(inputPic, getContext(), mFaces);
 
             SetBitmapOnImageView(outputPic);
         }
@@ -608,6 +606,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View view)
                 {
                     Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
                     startActivityForResult(intent,
                             CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
                 }
@@ -703,16 +702,16 @@ public class MainActivity extends AppCompatActivity {
                 return 1;
             }
 
-            return 3;
+            return 2;
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return "SECTION 1";
+                    return "Browse";
                 case 1:
-                    return "SECTION 2";
+                    return "Capture";
                 case 2:
                     return "SECTION 3";
             }
