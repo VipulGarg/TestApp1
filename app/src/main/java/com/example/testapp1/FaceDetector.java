@@ -257,7 +257,7 @@ public class FaceDetector {
 
         // draw rectangle
         Imgproc.rectangle(target, p1, p2, bubbleColor, -1 /*negative thickness means filled*/);
-        // TODO draw bubble cloud border
+        // draw bubble cloud border
         double i;
         // top
         for (i=left; i<left+width; )
@@ -279,7 +279,7 @@ public class FaceDetector {
             Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
             i += (puffSize-overlap)*2;
         }
-        // left //TODO left/right overlap factor
+        // left
         for (i=top; i<top+height; )
         {
             int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
