@@ -143,6 +143,66 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public static enum Emotion
+    {
+        Anger, Contempt, Disgust, Fear, Happiness, Sadness, Surprise, Neutral, None
+    }
+
+    public static String[] Anger_Strings = {
+            "I may look calm, but in my head I've killed you 3 times",
+            "And this is my happy face",
+            "I wouldn't have to manage my anger if people would manage their stupidity",
+            "I will shit on everything you love",
+    };
+    public static String[] Contempt_Strings = {
+            "Who do these people think I am?!",
+            "Don't put your words in my mouth. I hate the taste of bullshit.",
+            "Offended you are. A shit I don't give.",
+            "I like the sound you make when you shut up"
+    };
+    public static String[] Disgust_Strings = {
+            "What is that smell?"
+    };
+    public static String[] Fear_Strings = {
+            "I don't think Barry liked my code",
+    };
+    public static String[] Happiness_Strings = {
+            "//oneweek is awesome!"
+    };
+    public static String[] Sadness_Strings = {
+            "They backed out my code..."
+    };
+    public static String[] Surprise_Strings = {
+            "What do you mean it went out in the fork?"
+    };
+    public static String[] Neutral_Strings = {
+            "Who looked at a bowl of rice and was like \"I bet the most efficient way of eating this is with two sticks\"",
+            "The problem with democracy is that appealing to the dumb half is as good a strategy as appealing to the smart half.",
+            "If thought bubbles appeared above my head, I'd be screwed.",
+            "If cats could talk, they wouldn't",
+    };
+
+    public static String[][] ThoughtStrings = {
+            Anger_Strings,
+            Contempt_Strings,
+            Disgust_Strings,
+            Fear_Strings,
+            Happiness_Strings,
+            Sadness_Strings,
+            Surprise_Strings,
+            Neutral_Strings};
+
+    public static String GetThought() { return GetThought(Emotion.None); }
+
+    public static String GetThought(Emotion emotion)
+    {
+        int length = ThoughtStrings[emotion.ordinal()].length;
+        if (length == 0)
+            return "";
+        int index = ThreadLocalRandom.current().nextInt(length);
+        return ThoughtStrings[emotion.ordinal()][index];
+    }
+
     /* Draws thought bubble onto target Mat
      * target is the Mat to be drawn on
      * p1 and p2 define the size and location of the thought bubble. (opposite corners)
