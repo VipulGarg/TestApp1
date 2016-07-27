@@ -149,6 +149,10 @@ public class MainActivity extends AppCompatActivity {
         int maxPuffSize = 50;
         int overlap = 5; //pixels to overlap on each side of a puff
 
+        int chainStartSize = 5;
+        double chainSpacing = 1.5; //spacing of bubble chain relative to size of bubbles
+        double chainGrowRate = 0.2;
+
         double top = Math.min(p1.y, p2.y);
         double left = Math.min(p1.x, p2.x);
         double width = Math.abs(p1.x - p2.x);
@@ -198,8 +202,30 @@ public class MainActivity extends AppCompatActivity {
             Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
             i += (puffSize-overlap)*2;
         }
-        // draw bubble chain to target // TODO make it pretty
-        Imgproc.line(target, targetPoint, new Point(left + width/2, top + height/2), bubbleColor, 2);
+
+        // draw bubble chain to target (from target point to thought bubble)
+        Point end = new Point(left + width/2, top + height/2);
+        double length = Math.sqrt(Math.pow(end.x - targetPoint.x, 2) + Math.pow(end.y - targetPoint.y, 2));
+        // length 1 vector pointing in direction of thought bubble
+        Point unitVector = new Point((end.x-targetPoint.x)/length, (end.y-targetPoint.y)/length);
+
+        Point cur = targetPoint;
+        int size = chainStartSize;
+        double distance = 0;
+        while (cur.x<left || cur.y<top || cur.x>(left+width) || cur.y>(top+height) && distance<length)
+        {
+            //draw
+            cur.x = cur.x + unitVector.x*size;
+            cur.y = cur.y + unitVector.y*size;
+            Imgproc.circle(target, cur, size, bubbleColor, -1 /*negative thickness -> filled*/);
+            //move cur
+            cur.x += unitVector.x*size*chainSpacing;
+            cur.y += unitVector.y*size*chainSpacing;
+            distance += size + size*chainSpacing;
+            //update size
+            size = (int) Math.min(size + size*2.*chainGrowRate, maxPuffSize);
+        }
+
         // draw bubble text
         // TODO code up some word wrap?
         Size textBoxSize = Imgproc.getTextSize(text, Core.FONT_HERSHEY_SIMPLEX, textSize, 1 /* thickness */, null);
