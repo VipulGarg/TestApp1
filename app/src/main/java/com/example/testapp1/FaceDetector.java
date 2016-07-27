@@ -6,7 +6,6 @@ package com.example.testapp1;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.util.SparseArray;
 
 import com.google.android.gms.vision.face.Face;
@@ -21,13 +20,16 @@ import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs; // imread, imwrite, etc
-import org.opencv.videoio.*;   // VideoCapture
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class FaceDetector {
@@ -106,34 +108,91 @@ public class FaceDetector {
         return newRect;
     }
 
-    public Rect FindLargest(Rect[] rects){
-        int largest = 0;
-        double area = 0;
+    public class RectComparator implements Comparator<Rect>
+    {
+        @Override
+        public int compare(Rect lhs, Rect rhs) {
+            float sizeLhs = lhs.width * lhs.height;
+            float sizeRhs = rhs.width * rhs.height;
+            if (sizeLhs > sizeRhs)
+                return -1;
+            if (sizeRhs > sizeLhs)
+                return -1;
+            return 0;
+        }
+    }
+
+    class FaceInformation
+    {
+        public Rect rect;
+        public Boolean Happy = false;
+    }
+
+    public FaceInformation FindBestRect(Rect[] rects, float[] probArray){
+
+        FaceInformation fi = new FaceInformation();
+        List<Rect> listRects = Arrays.asList(rects);
+        Collections.sort(listRects, new RectComparator());
+        if (probArray == null || probArray.length != rects.length)
+        {
+            fi.rect = listRects.get(0);
+            return fi;
+        }
+
+        int compareSize = listRects.size();
+        if (listRects.size() > 3)
+            compareSize = 3;
+        int best = 0;
+        float minProb = 1;
+        boolean happy = false;
         for (int index = 0; index < rects.length; index++){
-            Rect rect = rects[index];
-            double areaNew = rect.width * rect.height;
-            if (areaNew > area){
-                area = areaNew;
-                largest = index;
+            float fromZero = Math.abs(probArray[index] - 0);
+            float fromOne = Math.abs(probArray[index] - 1);
+            float minProbLocal = Math.min(fromOne, fromZero);
+            if (minProbLocal <= minProb)
+            {
+                boolean found = false;
+                for (int i = 0; i < compareSize; i++)
+                {
+                    if (listRects.get(i).br().x == rects[index].br().x && listRects.get(i).br().y == rects[index].br().y)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found)
+                {
+                    best = index;
+                    if (fromOne < fromZero)
+                        happy = true;
+                    else
+                        happy = false;
+                }
             }
         }
 
-        return rects[largest];
+        fi.rect = rects[best];
+        fi.Happy = happy;
+        return fi;
     }
 
-    public Bitmap ProcessRects(Rect[] rects, Mat image, Bitmap inputPic)
+    public Bitmap ProcessRects(Rect[] rects, Mat image, Bitmap inputPic, float[] probArray)
     {
-        Rect largestRect = FindLargest(rects);
+        FaceInformation fi = FindBestRect(rects, probArray);
+        Rect bestRect = fi.rect;
+        String toShow = "Shit On You!!!";
+        if (fi.Happy)
+            toShow = "Candy on You!!!";
 
 //            Imgproc.rectangle(image, new Point(largestRect.x, largestRect.y), new Point(largestRect.x + largestRect.width, largestRect.y + largestRect.height),
 //                    new Scalar(255, 0, 0));
 
-        Rect newRect = LocateTextBox(largestRect, largestRect.width, largestRect.height, inputPic.getWidth());
+        Rect newRect = LocateTextBox(bestRect, bestRect.width, bestRect.height, inputPic.getWidth());
         if (newRect.x != -1 && newRect.y != -1){
             Point topLeft = new Point(newRect.x, newRect.y);
             Point bottomRight = new Point(newRect.x + newRect.width, newRect.y + newRect.height);
-            Point face = new Point(largestRect.x, largestRect.y);
-            DrawThoughtBubble(image, topLeft, bottomRight, face, "I'm Awesome");
+            Point face = new Point(bestRect.x, bestRect.y);
+            DrawThoughtBubble(image, topLeft, bottomRight, face, toShow);
 //                Imgproc.rectangle(image, new Point(newRect.x, newRect.y), new Point(newRect.x + newRect.width, newRect.y + newRect.height),
 //                        new Scalar(0, 255, 0));
         }
@@ -164,6 +223,7 @@ public class FaceDetector {
 
             if (mFaces.size() != 0)
             {
+                float[] probArray = new float[mFaces.size()];
                 Rect[] rects = new Rect[mFaces.size()];
                 for (int i = 0; i < mFaces.size(); ++i)
                 {
@@ -173,9 +233,10 @@ public class FaceDetector {
                     rects[i].width = (int) mFaces.get(key).getWidth();
                     rects[i].x = (int) mFaces.get(key).getPosition().x;
                     rects[i].y = (int) mFaces.get(key).getPosition().y;
+                    probArray[i] = mFaces.get(key).getIsSmilingProbability();
                 }
 
-                return ProcessRects(rects, image, inputPic);
+                return ProcessRects(rects, image, inputPic, probArray);
             }
 
             InputStream is = context.getResources().openRawResource(R.raw.leofacedet);
@@ -205,7 +266,7 @@ public class FaceDetector {
             // TODO: we need to draw bubble and text instead
             Rect[] rects = faceDetections.toArray();
 
-            return ProcessRects(rects, image, inputPic);
+            return ProcessRects(rects, image, inputPic, null);
 
         } catch (Exception e) {
             // do nothing
