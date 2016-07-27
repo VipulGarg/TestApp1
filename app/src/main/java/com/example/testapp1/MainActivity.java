@@ -100,8 +100,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         */
-
-        System.loadLibrary("opencv_java3");
     }
 
 
