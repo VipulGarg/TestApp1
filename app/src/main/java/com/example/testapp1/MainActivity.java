@@ -153,11 +153,15 @@ public class MainActivity extends AppCompatActivity {
     {
         Scalar bubbleColor = new Scalar(255,255,255);
         Scalar textColor = new Scalar(0,0,0);
-        double textSize = 0.5;
-        double textMargin = 2;
+        double textSize = 0.4;
 
-        double minPuffSize = 5;
-        double maxPuffSize = 30;
+        int minPuffSize = 20;
+        int maxPuffSize = 50;
+        int overlap = 5; //pixels to overlap on each side of a puff
+
+        int chainStartSize = 5;
+        double chainSpacing = 1.5; //spacing of bubble chain relative to size of bubbles
+        double chainGrowRate = 0.2;
 
         double top = Math.min(p1.y, p2.y);
         double left = Math.min(p1.x, p2.x);
@@ -166,23 +170,77 @@ public class MainActivity extends AppCompatActivity {
 
         // draw rectangle
         Imgproc.rectangle(target, p1, p2, bubbleColor, -1 /*negative thickness means filled*/);
-        // draw bubble text
-        // TODO code up some word wrap?
-        Size textBoxSize = Imgproc.getTextSize(text, Core.FONT_HERSHEY_SIMPLEX, textSize, 1 /* thickness */, null);
-        Imgproc.putText(target, text, new Point(left+textMargin, top+textBoxSize.height+textMargin),
-                Core.FONT_HERSHEY_SIMPLEX, textSize, textColor);
         // TODO draw bubble cloud border
         double i;
         // top
-//        for (i=left; i<left+width; )
-//        {
-//            double puffSize = ThreadLocalRandom.current().nextDouble(minPuffSize, maxPuffSize);
-//        }
+        for (i=left; i<left+width; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > left+width)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(i+puffSize-overlap, top);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += (puffSize-overlap)*2;
+        }
         // bottom
-        // left
+        for (i=left; i<left+width; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > left+width)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(i+puffSize-overlap, top+height);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += (puffSize-overlap)*2;
+        }
+        // left //TODO left/right overlap factor
+        for (i=top; i<top+height; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > top+height)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(left, i+puffSize-overlap);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += (puffSize-overlap)*2;
+        }
         // right
-        // draw bubble chain to target // TODO make it pretty
-        Imgproc.line(target, targetPoint, new Point(left + width/2, top + height/2), bubbleColor, 2);
+        for (i=top; i<top+height; )
+        {
+            int puffSize = ThreadLocalRandom.current().nextInt(minPuffSize, maxPuffSize);
+            if (i+puffSize*2 > top+height)
+                puffSize = (int) Math.max((top+height-i+1)/2, minPuffSize);
+            Point center = new Point(left+width, i+puffSize-overlap);
+            Imgproc.circle(target, center, puffSize, bubbleColor, -1 /*negative thickness -> filled*/);
+            i += (puffSize-overlap)*2;
+        }
+
+        // draw bubble chain to target (from target point to thought bubble)
+        Point end = new Point(left + width/2, top + height/2);
+        double length = Math.sqrt(Math.pow(end.x - targetPoint.x, 2) + Math.pow(end.y - targetPoint.y, 2));
+        // length 1 vector pointing in direction of thought bubble
+        Point unitVector = new Point((end.x-targetPoint.x)/length, (end.y-targetPoint.y)/length);
+
+        Point cur = targetPoint;
+        int size = chainStartSize;
+        double distance = 0;
+        while (cur.x<left || cur.y<top || cur.x>(left+width) || cur.y>(top+height) && distance<length)
+        {
+            //draw
+            cur.x = cur.x + unitVector.x*size;
+            cur.y = cur.y + unitVector.y*size;
+            Imgproc.circle(target, cur, size, bubbleColor, -1 /*negative thickness -> filled*/);
+            //move cur
+            cur.x += unitVector.x*size*chainSpacing;
+            cur.y += unitVector.y*size*chainSpacing;
+            distance += size + size*chainSpacing;
+            //update size
+            size = (int) Math.min(size + size*2.*chainGrowRate, maxPuffSize);
+        }
+
+        // draw bubble text
+        // TODO code up some word wrap?
+        Size textBoxSize = Imgproc.getTextSize(text, Core.FONT_HERSHEY_SIMPLEX, textSize, 1 /* thickness */, null);
+        Imgproc.putText(target, text, new Point(left, top+textBoxSize.height),
+                Core.FONT_HERSHEY_SIMPLEX, textSize, textColor);
     }
 
     /**
